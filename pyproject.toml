@@ -11,6 +11,7 @@ qt-material = "^2.10"
 numpy = "^1.22.3"
 appdirs = "^1.4.4"
 orjson = "^3.7.2"
+py-appdata = "^0.0.6"
 
 [tool.poetry.dev-dependencies]
 

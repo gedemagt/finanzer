@@ -1,18 +1,18 @@
+import logging
 import sys
 
 from PySide6.QtGui import QShortcut, QKeySequence
-from PySide6.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QHBoxLayout, QMainWindow, QApplication
+from PySide6.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QHBoxLayout, QMainWindow, QApplication, QFileDialog
+from appdata import appdata
 
-from appdata import from_app_data_dir
 from finance.gui.widgets.account_activity import AccountWidget
 from finance.gui.widgets.expenses import ExpenseTableWidget
-from qt_material import apply_stylesheet
 
 from finance.gui.widgets.incomes import IncomeTableWidget
 from finance.gui.widgets.pie_chart import TestChart
+from finance.gui.widgets.toolbar import Toolbar
 from finance.gui.widgets.transfers import TransferTableWidget
 from finance.model.entry import Budget
-from finance.repository.budget_repo import DocumentRepo
 
 
 def build_layout(budget: Budget) -> QWidget:
@@ -33,38 +33,55 @@ def build_layout(budget: Budget) -> QWidget:
     layout.addLayout(right_layout, 1)
     widget = QWidget()
     widget.setLayout(layout)
+
     return widget
+
+
+class Application(QApplication):
+
+    def __init__(self):
+        super().__init__()
+
+        self._budget = None
+
+        self.window = QMainWindow()
+        self.window.resize(1200, 800)
+
+        shortcut = QShortcut(QKeySequence("Ctrl+S"), self.window)
+        shortcut.activated.connect(self._save_budget)
+
+        self._toolbar = Toolbar()
+        self._toolbar.set_on_load(lambda x: self.set_budget(Budget.load(x)))
+        self._toolbar.set_on_new(lambda: self.set_budget(Budget("My Budget")))
+
+        self.window.addToolBar(self._toolbar)
+        self.window.show()
+
+        try:
+            budget = Budget.load(appdata["last_budget"])
+            self.set_budget(budget)
+        except KeyError:
+            budget = Budget("My Budget")
+            self.set_budget(budget)
+
+    def set_budget(self, budget: Budget):
+        self._budget = budget
+        self.window.setWindowTitle(f"Budget: {budget.name}")
+        self.window.setCentralWidget(build_layout(budget))
+        if budget.path:
+            appdata["last_budget"] = budget.path
+
+    def _save_budget(self):
+        if not self._budget.path:
+            f_name, _filter = QFileDialog.getSaveFileName(self.window, filter="*.json")
+            self._budget.path = f_name
+        self._budget.save()
 
 
 if __name__ == "__main__":
 
-    #appdata.set_app_dir_provider(AppDirsProvider(AppDirs("financer", version="0.1.0")))
-    #appdata.ensure_app_data_exists()
+    logging.basicConfig(level="INFO")
 
-    repo = DocumentRepo()
-
-    try:
-        budget = repo.get_budgets()[0]
-    except IndexError:
-        budget = Budget("My Budget")
-        repo.save_budget(budget)
-
-
-    def slot():
-        repo.save_budget(budget)
-
-    app = QApplication([])
-    window = QMainWindow()
-    window.setWindowTitle(f"Budget: {budget.name}")
-
-    shortcut = QShortcut(QKeySequence("Ctrl+S"), window)
-    shortcut.activated.connect(slot)
-
-    # setup stylesheet
-    #apply_stylesheet(app, theme='light_amber.xml')
-
-    window.setCentralWidget(build_layout(budget))
-    window.resize(1200, 800)
-    window.show()
+    app = Application()
 
     sys.exit(app.exec())

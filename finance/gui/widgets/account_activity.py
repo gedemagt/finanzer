@@ -113,7 +113,9 @@ class AccountWidget(QtWidgets.QWidget):
 
         self.combo_box = QComboBox()
         self.combo_box.addItems(self.budget.budget_accounts)
-        self.combo_box.setCurrentText(appdata["selected_budget"])
+
+        self.combo_box.setCurrentText(appdata.get("selected_budget", None))
+
         self.combo_box.currentIndexChanged.connect(self.selectionchange)
         self.layout.addWidget(self.combo_box)
 

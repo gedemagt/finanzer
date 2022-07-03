@@ -1,7 +1,10 @@
 import dataclasses
 import json
+import logging
+import os
 from dataclasses import dataclass, field
-from typing import List
+from pathlib import Path
+from typing import List, Union
 
 
 @dataclass
@@ -51,6 +54,7 @@ class Budget:
     incomes: List[EntryGroup] = field(default_factory=list)
     transfers: List[Transfer] = field(default_factory=list)
     budget_accounts: List[str] = field(default_factory=list)
+    path: Union[Path, str] = None
 
     def total_monthly(self):
         return sum(x.total_monthly() for x in self.expenses)
@@ -73,9 +77,13 @@ class Budget:
               [x.source for x in self.transfers] + [x.destination for x in self.transfers]
         return list(set(acc))
 
-    def save(self, path: str):
-        with open(path, "w+") as f:
-            f.write(json.dumps(self.to_dict(), indent=4))
+    def save(self, path: str = None):
+        if path is not None:
+            self.path = path
+        if self.path:
+            logging.info(f"Saving budget to {self.path}")
+            with open(self.path, "w+") as f:
+                f.write(json.dumps(self.to_dict(), indent=4))
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
@@ -104,7 +112,9 @@ class Budget:
         return b
 
     @staticmethod
-    def load(path="db.json"):
+    def load(path: str):
         with open(path, "r") as f:
             data = json.loads(f.read())
-            return Budget.from_dict(data)
+            b = Budget.from_dict(data)
+            b.path = os.path.abspath(path)
+            return b
