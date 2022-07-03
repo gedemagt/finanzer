@@ -94,6 +94,7 @@ class IncomeTableWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.table)
 
         self.redraw()
+        self.budget.register_on_update(lambda *args: self.redraw())
 
     def redraw(self):
         self.table.clearContents()
@@ -201,7 +202,7 @@ class IncomeTableWidget(QtWidgets.QWidget):
 
     def update_payment_size(self, k):
         if isinstance(k, GroupTableWidget):
-            for e in self.budget.incomes:
-                if e.name == k.old_name:
+            for e in self.budget.expenses:
+                if e.name == k.old_name and e.name != k.text():
                     e.name = k.text()
             k.old_name = k.text()

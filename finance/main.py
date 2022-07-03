@@ -29,8 +29,8 @@ def build_layout(budget: Budget) -> QWidget:
     tabs.addTab(TransferTableWidget(budget), "Transfers")
     left_layout.addWidget(tabs)
 
-    layout.addLayout(left_layout, 1)
-    layout.addLayout(right_layout, 1)
+    layout.addLayout(left_layout, 12)
+    layout.addLayout(right_layout, 8)
     widget = QWidget()
     widget.setLayout(layout)
 
@@ -68,6 +68,7 @@ class Application(QApplication):
         self._budget = budget
         self.window.setWindowTitle(f"Budget: {budget.name}")
         self.window.setCentralWidget(build_layout(budget))
+        budget.register_on_update(lambda x, y,z: print(x,y,z))
         if budget.path:
             appdata["last_budget"] = budget.path
 

@@ -100,6 +100,7 @@ class ExpenseTableWidget(QtWidgets.QWidget):
         # self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.redraw()
+        self.budget.register_on_update(lambda *args: self.redraw())
 
     def redraw(self):
         self.table.clearContents()
@@ -216,6 +217,6 @@ class ExpenseTableWidget(QtWidgets.QWidget):
     def update_payment_size(self, k):
         if isinstance(k, GroupTableWidget):
             for e in self.budget.expenses:
-                if e.name == k.old_name:
+                if e.name == k.old_name and e.name != k.text():
                     e.name = k.text()
             k.old_name = k.text()

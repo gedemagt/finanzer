@@ -22,7 +22,7 @@ def item(val):
 
 class MonthlyMovements(QtWidgets.QWidget):
 
-    def __init__(self, budget: Budget, block_size=4):
+    def __init__(self, budget: Budget, block_size=3):
         super().__init__()
 
         self.budget = budget
@@ -62,6 +62,7 @@ class MonthlyMovements(QtWidgets.QWidget):
 
         self._account = None
 
+        self.budget.register_on_update(lambda *args: self.draw_account(self._account))
         self.combo_box.currentIndexChanged.connect(self.selectionchange)
 
     def selectionchange(self, i):
@@ -133,6 +134,7 @@ class AccountWidget(QtWidgets.QWidget):
 
         self.draw_account(self.combo_box.currentText())
         self._movements.draw_account(self.combo_box.currentText())
+        self.budget.register_on_update(lambda *args: self.draw_account(self.combo_box.currentText()))
 
     def selectionchange(self, i):
         appdata["selected_budget"] = self.combo_box.currentText()
@@ -157,6 +159,8 @@ class AccountWidget(QtWidgets.QWidget):
         average_expense = sum(monthly_expenses) / 12
         average_income = sum(monthly_incomes) / 12
 
+        diff = sum(monthly_incomes) - sum(monthly_expenses)
+
         saldos = np.zeros(12)
         saldos[0] = -monthly_expenses[0]
         for i in range(1, 12):
@@ -168,6 +172,7 @@ class AccountWidget(QtWidgets.QWidget):
         self.table.setItem(0, 0, item("Gennemsnit"))
         self.table.setItem(0, 1, item(average_expense))
         self.table.setItem(0, 2, item(average_income))
+        self.table.setItem(0, 3, item(diff))
 
         for row, (m, e, i, s) in enumerate(zip(MONTHS, monthly_expenses, monthly_incomes, saldos)):
             self.table.setItem(row + 1, 0, item(m))

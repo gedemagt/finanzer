@@ -7,8 +7,30 @@ from pathlib import Path
 from typing import List, Union
 
 
+class Observable:
+
+    def __init__(self):
+        self._on_update_listeners = []
+
+    def register_on_update(self, callback):
+        self._on_update_listeners.append(callback)
+
+    def notify(self, name, value):
+        for listener in self._on_update_listeners:
+            listener(self, name, value)
+
+    def __post_init__(self):
+        setattr(self, "_on_update_listeners", [])
+        def method(self, name, value):
+            super(self.__class__, self).__setattr__(name, value)
+            self.notify(name, value)
+
+        meths = {'__setattr__': method}
+        self.__class__ = type('Observable', (self.__class__,), meths)
+
+
 @dataclass
-class Entry:
+class Entry(Observable):
 
     name: str
     payment_size: float
@@ -29,16 +51,20 @@ class Entry:
 
 
 @dataclass
-class EntryGroup:
+class EntryGroup(Observable):
     name: str
     entries: List[Entry] = field(default_factory=list)
+
+    def add_entry(self, entry: Entry):
+        self.entries.append(entry)
+        entry.register_on_update(lambda x, y, z: self.notify("entries", self.entries))
 
     def total_monthly(self):
         return sum(x.monthly() for x in self.entries)
 
 
 @dataclass
-class Transfer:
+class Transfer(Observable):
 
     name: str
     source: str
@@ -47,7 +73,7 @@ class Transfer:
 
 
 @dataclass
-class Budget:
+class Budget(Observable):
 
     name: str
     expenses: List[EntryGroup] = field(default_factory=list)
@@ -65,6 +91,18 @@ class Budget:
             result += exp.entries
 
         return result
+
+    def add_expense_group(self, entry_group: EntryGroup):
+        entry_group.register_on_update(lambda x, y, z: self.notify("expenses", self.expenses))
+        self.expenses.append(entry_group)
+
+    def add_incomes_group(self, entry_group: EntryGroup):
+        entry_group.register_on_update(lambda x, y, z: self.notify("incomes", self.incomes))
+        self.incomes.append(entry_group)
+
+    def add_transfer(self, transfer: Transfer):
+        transfer.register_on_update(lambda x,y,z: self.notify("transfers", self.transfers))
+        self.transfers.append(transfer)
 
     def all_incomes(self):
         result = []
@@ -94,17 +132,17 @@ class Budget:
         for e_grp in data["expenses"]:
             grp = EntryGroup(e_grp["name"])
             for e in e_grp["entries"]:
-                grp.entries.append(Entry(**e))
-            b.expenses.append(grp)
+                grp.add_entry(Entry(**e))
+            b.add_expense_group(grp)
 
         for e_grp in data["incomes"]:
             grp = EntryGroup(e_grp["name"])
             for e in e_grp["entries"]:
-                grp.entries.append(Entry(**e))
-            b.incomes.append(grp)
+                grp.add_entry(Entry(**e))
+            b.add_incomes_group(grp)
 
         for t in data["transfers"]:
-            b.transfers.append(Transfer(**t))
+            b.add_transfer(Transfer(**t))
 
         for b_acc in data["budget_accounts"]:
             b.budget_accounts.append(b_acc)
