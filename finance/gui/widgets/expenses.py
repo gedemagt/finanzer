@@ -3,7 +3,7 @@ from typing import Any
 
 from PySide6 import QtWidgets, QtCore
 from PySide6.QtGui import QFont, QColor
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton, QAbstractItemView, QComboBox
+from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton, QAbstractItemView, QComboBox, QLabel
 
 from finance.model.entry import Budget, Entry, EntryGroup
 

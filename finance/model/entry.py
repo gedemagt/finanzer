@@ -85,6 +85,9 @@ class Budget(Observable):
     def total_monthly(self):
         return sum(x.total_monthly() for x in self.expenses)
 
+    def total_monthly_income(self):
+        return sum(x.total_monthly() for x in self.incomes)
+
     def all_expenses(self):
         result = []
         for exp in self.expenses:

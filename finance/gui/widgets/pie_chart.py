@@ -1,8 +1,9 @@
-from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCharts import QChart, QChartView, QPieSeries
+from PySide6.QtGui import QPainter, Qt
+from PySide6.QtWidgets import QWidget, QHBoxLayout
+from PySide6.QtCharts import QChart, QChartView, QBarSet, QValueAxis, QStackedBarSeries, QBarCategoryAxis
 
 from finance.model.entry import Budget
+from finance.utils import clearLayout
 
 
 class TestChart(QWidget):
@@ -10,27 +11,58 @@ class TestChart(QWidget):
     def __init__(self, budget: Budget):
         super().__init__()
 
-        self.series = QPieSeries()
+        self._budget = budget
+        self._expense_widget = self._build(budget)
+
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(self._expense_widget)
+        self.setLayout(self.layout)
+
+        budget.register_on_update(self._update)
+
+    def _build(self, budget: Budget) -> QWidget:
+        series = QStackedBarSeries()
 
         budget_monthly = budget.total_monthly()
+
+        expenses = []
+
         for group in budget.expenses:
             monthly = group.total_monthly()
-            try:
-                self.series.append(f"<b>{group.name}</b><br> {int(monthly)} ({group.total_monthly()/budget_monthly*100:0.1f}%)", monthly)
-            except ZeroDivisionError:
-                self.series.append(
-                    f"<b>{group.name}</b><br> {int(monthly)} (-%)", monthly)
+            expenses.append((f"({monthly / budget_monthly * 100:00.0f}%) {group.name}", monthly))
 
-        self.chart = QChart()
-        self.chart.addSeries(self.series)
+        for name, expense in sorted(expenses, key=lambda x: x[1]):
+            month_set = QBarSet(name)
+            month_set.append(expense / 1000)
+            month_set.append(0)
+            series.append(month_set)
 
-        self.chart.legend().hide()
-        for s in self.series.slices():
-            s.setLabelVisible()
+        for group in budget.incomes:
+            month_set = QBarSet(group.name)
+            month_set.append(0)
+            month_set.append(group.total_monthly()/1000)
+            series.append(month_set)
 
-        self._chart_view = QChartView(self.chart)
-        self._chart_view.setRenderHint(QPainter.Antialiasing)
+        chart = QChart()
+        chart.addSeries(series)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self._chart_view)
-        self.setLayout(layout)
+        chart.legend().setAlignment(Qt.AlignLeft)
+        _chart_view = QChartView(chart)
+        _chart_view.setRenderHint(QPainter.Antialiasing)
+
+        axisY = QValueAxis()
+        axisY.setRange(0, max(budget.total_monthly_income(), budget.total_monthly())*1.1 // 1000)
+        chart.addAxis(axisY, Qt.AlignLeft)
+        series.attachAxis(axisY)
+
+        axisX = QBarCategoryAxis()
+        axisX.append(["Expenses", "Incomes"])
+        chart.addAxis(axisX, Qt.AlignBottom)
+
+        return _chart_view
+
+    def _update(self, *args):
+
+        clearLayout(self.layout)
+
+        self.layout.addWidget(self._build(self._budget))
