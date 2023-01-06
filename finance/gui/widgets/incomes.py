@@ -1,79 +1,18 @@
 from functools import partial
-from typing import Any
 
-from PySide6 import QtWidgets, QtCore
-from PySide6.QtGui import QFont, QColor
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton, QComboBox
+from PySide6 import QtWidgets
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton
 
+from finance.gui.widgets.entry_prop_table_item import ProppedTableWidget
+from finance.gui.widgets.group_table_item import GroupTableWidget
+from finance.gui.widgets.helpers import group_header_item, create_header_font
 from finance.model.entry import Budget, Entry, EntryGroup
 
 
-headers = ["Navn", "Betalingsstørrelse", "Konto", "Tag", "Månedligt"]
-
-
-class EntryPropTableWidget(QTableWidgetItem):
-
-    def __init__(self, entry: Entry, prop: str):
-        self.entry = entry
-        self.prop = prop
-        self.type = entry.__annotations__[prop]
-
-        val = getattr(self.entry, prop)
-        if isinstance(val, float):
-            val = f"{val:0.2f}"
-        else:
-            val = str(val)
-
-        QTableWidgetItem.__init__(self, val)
-
-    def value(self):
-        return getattr(self.entry, self.prop)
-
-    def setData(self, role: int, value: Any) -> None:
-        if role == 2:
-            try:
-                converted = self.type(value)
-                super().setData(role, converted)
-                setattr(self.entry, self.prop, converted)
-            except ValueError:
-                pass
-        else:
-            super().setData(role, value)
-
-
-class GroupTableWidget(QTableWidgetItem):
-
-    def __init__(self, name):
-        QTableWidgetItem.__init__(self, name)
-        self.old_name = name
-        self.setBackground(QColor.fromRgb(75, 191, 75, 255))
-
-
-def item(entry: Entry, prop: str, editable=False, align_right=True):
-
-    _item = EntryPropTableWidget(entry, prop)
-    _item.setTextAlignment(QtCore.Qt.AlignVCenter)
-    if align_right:
-        _item.setTextAlignment(_item.textAlignment() | QtCore.Qt.AlignRight)
-
-
-    #_item.setFlags(~QtCore.Qt.ItemIsEditable & ~QtCore.Qt.ItemIsSelectable)
-    if not editable:
-        _item.setFlags(~QtCore.Qt.ItemIsEditable)
-
-    return _item
-
-
-def create_header_font():
-    font = QFont()
-    font.setBold(True)
-    return font
-
-
-def group_header_item(name: str):
-    group_header = GroupTableWidget(name)
-    group_header.setFont(create_header_font())
-    return group_header
+headers = ["Navn", "Beløb", "Konto", "Månedligt"]
+COLOR = QColor.fromRgb(75, 191, 75, 255)
 
 
 class IncomeTableWidget(QtWidgets.QWidget):
@@ -112,7 +51,7 @@ class IncomeTableWidget(QtWidgets.QWidget):
     def draw_group(self, group: EntryGroup, start_row) -> int:
         row = start_row
         self.table.setSpan(row, 0, 1, len(headers) - 1)
-        self.table.setItem(row, 0, group_header_item(group.name))
+        self.table.setItem(row, 0, group_header_item(group.name, COLOR))
 
         row += 1
 
@@ -121,74 +60,36 @@ class IncomeTableWidget(QtWidgets.QWidget):
         for e in group.entries:
 
             monthly_widget = QTableWidgetItem(f"{e.monthly():0.2f}")
-            monthly_widget.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
+            monthly_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+            monthly_widget.setFlags(~Qt.ItemIsEditable)
 
-            self.table.setItem(row, 0, item(e, "name", True, False))
-            self.table.setItem(row, 1, item(e, "payment_size", True))
-            self.table.setItem(row, 2, item(e, "account", True, False))
-            self.table.setItem(row, 3, item(e, "tag", True, False))
+            self.table.setItem(row, 0, ProppedTableWidget(e, "name"))
+            self.table.setItem(row, 1, ProppedTableWidget(e, "payment_size"))
+            self.table.setItem(row, 2, ProppedTableWidget(e, "account"))
             self.table.setItem(row, 4, monthly_widget)
             row += 1
             monthly_sum += e.monthly()
 
         sum_r_widget = QTableWidgetItem(f"{monthly_sum:0.2f}")
         sum_r_widget.setBackground(QColor.fromRgb(75, 191, 75, 255))
-        sum_r_widget.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
+        sum_r_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
         sum_r_widget.setFont(create_header_font())
+        sum_r_widget.setFlags(~Qt.ItemIsEditable)
         self.table.setItem(row - len(group.entries) - 1, len(headers) - 1, sum_r_widget)
 
         btn = QPushButton("New..")
         btn.setMaximumWidth(50)
-        self.table.setSpan(row, 0, 1, 9)
+        self.table.setSpan(row, 0, 1, 4)
         self.table.setCellWidget(row, 0, btn)
         btn.clicked.connect(partial(self.add_new, group))
         row += 1
 
         return row
 
-    def create_month_combobox(self, entry, prop):
-        cb = QComboBox()
-        cb.addItems(["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"])
-        cb.setCurrentIndex(getattr(entry, prop)-1)
-
-        def on_change():
-            setattr(entry, prop, cb.currentIndex()+1)
-
-        cb.currentTextChanged.connect(on_change)
-        return cb
-
-    def create_period_combobox(self, entry, prop):
-        cb = QComboBox()
-        m = {
-            "Månedvis": 1,
-            "Kvartalsvis": 3,
-            "Halvårlig": 6,
-            "Årlig": 12
-        }
-        cb.addItems(m.keys())
-        cb.setCurrentIndex(list(m.values()).index(getattr(entry, prop)))
-
-        def on_change():
-            setattr(entry, prop, m[cb.currentText()])
-
-        cb.currentTextChanged.connect(on_change)
-        return cb
-
-    def create_combobox(self, entry, prop):
-        cb = QComboBox()
-        cb.addItems(["BS", "Kort", "MobilePay", "Overførsel"])
-        cb.setCurrentText(getattr(entry, prop))
-
-        def on_change():
-            setattr(entry, prop, cb.currentText())
-
-        cb.currentTextChanged.connect(on_change)
-        return cb
-
     def add_new_group_row(self, row):
         btn = QPushButton("New group..")
         btn.setMaximumWidth(150)
-        self.table.setSpan(row, 0, 1, 8)
+        self.table.setSpan(row, 0, 1, 3)
         self.table.setCellWidget(row, 0, btn)
         btn.clicked.connect(self.add_new_group)
 

@@ -68,7 +68,7 @@ class Application(QApplication):
         self._budget = budget
         self.window.setWindowTitle(f"Budget: {budget.name}")
         self.window.setCentralWidget(build_layout(budget))
-        budget.register_on_update(lambda x, y,z: print(x,y,z))
+
         if budget.path:
             appdata["last_budget"] = budget.path
 
