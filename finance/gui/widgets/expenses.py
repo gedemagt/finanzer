@@ -4,6 +4,7 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton
+from appdata import appdata
 
 from finance.gui.widgets.entry_prop_table_item import ProppedTableWidget
 from finance.gui.widgets.group_table_item import GroupTableWidget
@@ -22,6 +23,9 @@ class ExpenseTableWidget(QtWidgets.QWidget):
     def __init__(self, budget: Budget):
         super().__init__()
 
+        self._prefix = "expenses"
+
+        self._group_rows_mapping = {}
         self.budget = budget
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -30,12 +34,23 @@ class ExpenseTableWidget(QtWidgets.QWidget):
         self.table.setHorizontalHeaderLabels(HEADERS)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setStretchLastSection(True)
+        try:
+            for idx, width in enumerate(appdata[f"{self._prefix}.columns"]):
+                self.table.setColumnWidth(idx, width)
+        except KeyError:
+            pass
 
         self.table.itemChanged.connect(self.update_payment_size)
+        self.table.itemClicked.connect(self.collapse)
+        self.table.horizontalHeader().sectionResized.connect(self._save_column_size)
         self.layout.addWidget(self.table)
 
         self.redraw()
         self.budget.register_on_update(lambda *args: self.redraw())
+
+    def _save_column_size(self, *args):
+        widths = [self.table.columnWidth(i) for i in range(self.table.columnCount())]
+        appdata[f"{self._prefix}.columns"] = widths
 
     def redraw(self):
         self.table.clearContents()
@@ -50,10 +65,19 @@ class ExpenseTableWidget(QtWidgets.QWidget):
             row = self.draw_group(g, row)
         self.add_new_group_row(row)
 
+        for group in self.budget.expenses:
+            try:
+                if appdata[f"{self._prefix}.layout"][group.name] == "hidden":
+                    self._set_group_hidden(group.name, True)
+            except KeyError:
+                pass
+
     def draw_group(self, group: EntryGroup, start_row) -> int:
         row = start_row
         self.table.setSpan(row, 0, 1, len(HEADERS) - 1)
         self.table.setItem(row, 0, group_header_item(group.name, COLOR))
+
+        self._group_rows_mapping[group.name] = (row + 1, len(group.entries) + 1)
 
         row += 1
 
@@ -113,3 +137,27 @@ class ExpenseTableWidget(QtWidgets.QWidget):
                 if e.name == k.old_name and e.name != k.text():
                     e.name = k.text()
             k.old_name = k.text()
+
+    def _set_group_hidden(self, group_name: str, hidden: bool):
+        start, entries = self._group_rows_mapping[group_name]
+
+        for x in range(start, start + entries):
+            if hidden:
+                self.table.hideRow(x)
+            else:
+                self.table.showRow(x)
+
+    def _is_hidden(self, group_name: str):
+        start, _ = self._group_rows_mapping[group_name]
+        return self.table.isRowHidden(start)
+
+    def collapse(self, k):
+        if isinstance(k, GroupTableWidget):
+            try:
+                is_hidden = self._is_hidden(k.old_name)
+                old = appdata.get(f"{self._prefix}.layout", {})
+                old[k.old_name] = "visible" if is_hidden else "hidden"
+                appdata[f"{self._prefix}.layout"] = old
+                self._set_group_hidden(k.old_name, not is_hidden)
+            except KeyError:
+                pass

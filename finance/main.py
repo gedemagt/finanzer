@@ -45,7 +45,7 @@ class Application(QApplication):
         self._budget = None
 
         self.window = QMainWindow()
-        self.window.resize(1200, 800)
+        self.window.showMaximized()
 
         shortcut = QShortcut(QKeySequence("Ctrl+S"), self.window)
         shortcut.activated.connect(self._save_budget)
