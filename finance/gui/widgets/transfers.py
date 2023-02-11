@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QTableWidget, QPushButton
 from finance.gui.widgets.entry_prop_table_item import ProppedTableWidget
 from finance.model.entry import Budget, Transfer
 
-headers = ["Navn", "Betaling", "Fra", "Til"]
+headers = ["Navn", "Ejer", "Betaling", "Fra", "Til"]
 
 
 class TransferTableWidget(QtWidgets.QWidget):
@@ -48,9 +48,10 @@ class TransferTableWidget(QtWidgets.QWidget):
     def draw_transfer(self, t: Transfer, row) -> int:
 
         self.table.setItem(row, 0, ProppedTableWidget(t, "name"))
-        self.table.setItem(row, 1, ProppedTableWidget(t, "amount"))
-        self.table.setItem(row, 2, ProppedTableWidget(t, "source"))
-        self.table.setItem(row, 3, ProppedTableWidget(t, "destination"))
+        self.table.setItem(row, 1, ProppedTableWidget(t, "owner"))
+        self.table.setItem(row, 2, ProppedTableWidget(t, "amount"))
+        self.table.setItem(row, 3, ProppedTableWidget(t, "source"))
+        self.table.setItem(row, 4, ProppedTableWidget(t, "destination"))
 
         row += 1
         return row

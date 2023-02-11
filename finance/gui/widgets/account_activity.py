@@ -5,8 +5,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox, QTabWidget, QLabel
 
 from appdata import appdata
+
+from finance.gui.widgets.helpers import MONTHS
 from finance.model.entry import Budget
-from finance.utils import MONTHS
 from finance.utils.monthly_overview import monthly, expected_saldo, get_monthly_movements
 
 

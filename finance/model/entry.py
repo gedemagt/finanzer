@@ -21,6 +21,7 @@ class Observable:
 
     def __post_init__(self):
         setattr(self, "_on_update_listeners", [])
+
         def method(self, name, value):
             super(self.__class__, self).__setattr__(name, value)
             self.notify(name, value)
@@ -40,6 +41,7 @@ class Entry(Observable):
     payment_method: str = ""
     account: str = ""
     tag: str = ""
+    owner: str = ""
 
     def monthly(self):
         return (self.payment_size + self.payment_fee) / self.payment_period
@@ -70,6 +72,7 @@ class Transfer(Observable):
     source: str
     destination: str
     amount: float
+    owner: str = ""
 
 
 @dataclass

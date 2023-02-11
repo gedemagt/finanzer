@@ -5,11 +5,10 @@ from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QHBoxLayout, QMainWindow, QApplication, QFileDialog
 from appdata import appdata
 
+from finance.gui.widgets.factory import create_income_table, create_expense_table
 from finance.gui.widgets.account_activity import AccountWidget
-from finance.gui.widgets.expenses import ExpenseTableWidget
 
-from finance.gui.widgets.incomes import IncomeTableWidget
-from finance.gui.widgets.pie_chart import TestChart
+from finance.gui.widgets.pie_chart import BarChart
 from finance.gui.widgets.toolbar import Toolbar
 from finance.gui.widgets.transfers import TransferTableWidget
 from finance.model.entry import Budget
@@ -20,12 +19,12 @@ def build_layout(budget: Budget) -> QWidget:
 
     right_layout = QVBoxLayout()
     right_layout.addWidget(AccountWidget(budget), 2)
-    right_layout.addWidget(TestChart(budget), 2)
+    right_layout.addWidget(BarChart(budget), 2)
 
     left_layout = QVBoxLayout()
     tabs = QTabWidget()
-    tabs.addTab(ExpenseTableWidget(budget), "Expenses")
-    tabs.addTab(IncomeTableWidget(budget), "Incomes")
+    tabs.addTab(create_expense_table(budget), "Expenses")
+    tabs.addTab(create_income_table(budget), "Incomes")
     tabs.addTab(TransferTableWidget(budget), "Transfers")
     left_layout.addWidget(tabs)
 
@@ -60,7 +59,7 @@ class Application(QApplication):
         try:
             budget = Budget.load(appdata["last_budget"])
             self.set_budget(budget)
-        except KeyError:
+        except (KeyError, FileNotFoundError):
             budget = Budget("My Budget")
             self.set_budget(budget)
 
