@@ -1,3 +1,6 @@
+from enum import Enum
+from typing import List, Type
+
 from PySide6.QtGui import QFont, QColor
 from PySide6.QtWidgets import QComboBox
 
@@ -52,9 +55,33 @@ def create_period_combobox(entry, prop):
     return cb
 
 
+def create_enum_combobox(entry, prop, enum: Type[Enum]):
+    cb = QComboBox()
+    cb.addItems([x.value for x in enum])
+    cb.setCurrentText(getattr(entry, prop))
+
+    def on_change():
+        setattr(entry, prop, enum(cb.currentText()))
+
+    cb.currentTextChanged.connect(on_change)
+    return cb
+
+
 def create_payment_combobox(entry, prop):
     cb = QComboBox()
     cb.addItems(PAYMENT_METHODS)
+    cb.setCurrentText(getattr(entry, prop))
+
+    def on_change():
+        setattr(entry, prop, cb.currentText())
+
+    cb.currentTextChanged.connect(on_change)
+    return cb
+
+
+def create_account_combobox(entry, prop, accounts: List[str]):
+    cb = QComboBox()
+    cb.addItems(accounts)
     cb.setCurrentText(getattr(entry, prop))
 
     def on_change():

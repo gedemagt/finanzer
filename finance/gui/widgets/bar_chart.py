@@ -2,6 +2,7 @@ from PySide6.QtGui import QPainter, Qt
 from PySide6.QtWidgets import QWidget, QHBoxLayout
 from PySide6.QtCharts import QChart, QChartView, QBarSet, QValueAxis, QStackedBarSeries, QBarCategoryAxis
 
+from finance.gui.color_map import color_map_distinct
 from finance.model.entry import Budget
 
 
@@ -33,18 +34,23 @@ class BarChart(QWidget):
 
         expenses = []
 
+        color_iter_expenses = color_map_distinct()
+        color_iter_incomes = color_map_distinct()
+
         for group in self._budget.expenses:
             monthly = group.total_monthly()
             expenses.append((f"({monthly / budget_monthly * 100:00.0f}%) {group.name}", monthly))
 
-        for name, expense in sorted(expenses, key=lambda x: x[1]):
+        for name, expense in sorted(expenses, key=lambda x: x[1], reverse=True):
             month_set = QBarSet(name)
+            month_set.setColor(next(color_iter_expenses))
             month_set.append(expense / 1000)
             month_set.append(0)
             series.append(month_set)
 
         for group in self._budget.incomes:
             month_set = QBarSet(group.name)
+            month_set.setColor(next(color_iter_incomes))
             month_set.append(0)
             month_set.append(group.total_monthly() / 1000)
             series.append(month_set)

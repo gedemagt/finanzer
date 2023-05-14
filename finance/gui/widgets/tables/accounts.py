@@ -1,15 +1,17 @@
 from functools import partial
 
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import QTableWidget, QPushButton
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QTableWidget, QPushButton, QTableWidgetItem
 
 from finance.gui.widgets.entry_prop_table_item import ProppedTableWidget
-from finance.model.entry import Budget, Transfer
+from finance.gui.widgets.helpers import create_enum_combobox
+from finance.model.entry import Budget, Account, AccountType
 
-headers = ["Navn", "Ejer", "Betaling", "Fra", "Til"]
+headers = ["Navn", "Ejer", "Type", "Balance"]
 
 
-class TransferTableWidget(QtWidgets.QWidget):
+class AccountTableWidget(QtWidgets.QWidget):
 
     def __init__(self, budget: Budget):
         super().__init__()
@@ -36,8 +38,8 @@ class TransferTableWidget(QtWidgets.QWidget):
         self.table.setRowCount(total_rows)
 
         row = 0
-        for t in self.budget.transfers:
-            row = self.draw_transfer(t, row)
+        for t in self.budget.accounts:
+            row = self.draw_account(t, row)
 
         btn = QPushButton("New..")
         btn.setMaximumWidth(50)
@@ -45,17 +47,20 @@ class TransferTableWidget(QtWidgets.QWidget):
         self.table.setCellWidget(row, 0, btn)
         btn.clicked.connect(partial(self.add_new))
 
-    def draw_transfer(self, t: Transfer, row) -> int:
+    def draw_account(self, t: Account, row) -> int:
+        balances = self.budget.calculate_balances()
+        balance_widget = QTableWidgetItem(f"{balances[t.name]:0.2f}")
+        balance_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        balance_widget.setFlags(~Qt.ItemIsEditable)
 
         self.table.setItem(row, 0, ProppedTableWidget(t, "name"))
         self.table.setItem(row, 1, ProppedTableWidget(t, "owner"))
-        self.table.setItem(row, 2, ProppedTableWidget(t, "amount"))
-        self.table.setItem(row, 3, ProppedTableWidget(t, "source"))
-        self.table.setItem(row, 4, ProppedTableWidget(t, "destination"))
+        self.table.setCellWidget(row, 2, create_enum_combobox(t, "type", AccountType))
+        self.table.setItem(row, 3, balance_widget)
 
         row += 1
         return row
 
     def add_new(self):
-        self.budget.transfers.append(Transfer("New transfer", "", "", 0.0))
+        self.budget.accounts.append(Account("Ny konto", "", False))
         self.redraw()

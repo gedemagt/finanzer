@@ -4,13 +4,13 @@ from typing import List
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton
+from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QPushButton, QMenu
 from appdata import appdata
 
 from finance.gui.widgets.entry_prop_table_item import ProppedTableWidget
 from finance.gui.widgets.group_table_item import GroupTableWidget
 from finance.gui.widgets.helpers import group_header_item, create_header_font, create_month_combobox, \
-    create_period_combobox, create_payment_combobox
+    create_period_combobox, create_payment_combobox, create_account_combobox
 from finance.model.entry import Budget, Entry, EntryGroup
 
 
@@ -23,9 +23,10 @@ class TableWidget(QtWidgets.QWidget):
         self._headers = headers
         self._entry_group = entry_group
         self._color = color
+        self._budget = budget
 
         self._group_rows_mapping = {}
-
+        self._entry_row_mapping = {}
         self._group_rows_mapping = {}
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -48,6 +49,19 @@ class TableWidget(QtWidgets.QWidget):
 
         self.redraw()
         budget.register_on_update(lambda *args: self.redraw())
+
+    def contextMenuEvent(self, event):
+        if self.table.selectionModel().selection().indexes():
+            for i in self.table.selectionModel().selection().indexes():
+                row, column = i.row(), i.column()
+            menu = QMenu()
+            delete = menu.addAction("Delete")
+            action = menu.exec_(self.mapToGlobal(event.pos()))
+
+            print(self._entry_row_mapping[row])
+
+            if action == delete:
+                self._budget.delete(self._entry_row_mapping[row])
 
     def _save_column_size(self, *args):
         widths = [self.table.columnWidth(i) for i in range(self.table.columnCount())]
@@ -80,6 +94,7 @@ class TableWidget(QtWidgets.QWidget):
     def redraw(self):
         self.table.clearContents()
         self.table.clearSpans()
+        self._entry_row_mapping.clear()
 
         total_rows = sum(2 + len(x.entries) for x in self._entry_group) + 1
 
@@ -97,6 +112,21 @@ class TableWidget(QtWidgets.QWidget):
             except KeyError:
                 pass
 
+    def draw_entries(self, e: Entry, table: QTableWidget, row, budget: Budget):
+        monthly_widget = QTableWidgetItem(f"{e.monthly():0.2f}")
+        monthly_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        monthly_widget.setFlags(~Qt.ItemIsEditable)
+
+        table.setItem(row, 0, ProppedTableWidget(e, "name"))
+        table.setItem(row, 1, ProppedTableWidget(e, "owner"))
+        table.setItem(row, 2, ProppedTableWidget(e, "payment_size"))
+        table.setCellWidget(row, 3, create_period_combobox(e, "payment_period"))
+        if e.payment_period > 1:
+            table.setCellWidget(row, 4, create_month_combobox(e, "first_payment_month"))
+        table.setCellWidget(row, 5, create_payment_combobox(e, "payment_method"))
+        table.setCellWidget(row, 6, create_account_combobox(e, "account", [x.name for x in budget.accounts]))
+        table.setItem(row, 7, monthly_widget)
+
     def draw_group(self, group: EntryGroup, start_row) -> int:
         row = start_row
         self.table.setSpan(row, 0, 1, len(self._headers) - 1)
@@ -105,23 +135,11 @@ class TableWidget(QtWidgets.QWidget):
         self._group_rows_mapping[group.name] = (row + 1, len(group.entries) + 1)
 
         row += 1
-
         monthly_sum = 0.0
 
         for e in group.entries:
-            monthly_widget = QTableWidgetItem(f"{e.monthly():0.2f}")
-            monthly_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
-            monthly_widget.setFlags(~Qt.ItemIsEditable)
-
-            self.table.setItem(row, 0, ProppedTableWidget(e, "name"))
-            self.table.setItem(row, 1, ProppedTableWidget(e, "owner"))
-            self.table.setItem(row, 2, ProppedTableWidget(e, "payment_size"))
-            self.table.setCellWidget(row, 3, create_period_combobox(e, "payment_period"))
-            if e.payment_period > 1:
-                self.table.setCellWidget(row, 4, create_month_combobox(e, "first_payment_month"))
-            self.table.setCellWidget(row, 5, create_payment_combobox(e, "payment_method"))
-            self.table.setItem(row, 6, ProppedTableWidget(e, "account"))
-            self.table.setItem(row, 7, monthly_widget)
+            self.draw_entries(e, self.table, row, self._budget)
+            self._entry_row_mapping[row] = e
             row += 1
             monthly_sum += e.monthly()
 

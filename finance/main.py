@@ -1,16 +1,20 @@
 import logging
 import sys
+from pprint import pprint
 
 from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtWidgets import QVBoxLayout, QTabWidget, QWidget, QHBoxLayout, QMainWindow, QApplication, QFileDialog
 from appdata import appdata
 
-from finance.gui.widgets.factory import create_income_table, create_expense_table
+from finance.gui.widgets.diagram import Diagram
+from finance.gui.widgets.tables.accounts import AccountTableWidget
+from finance.gui.widgets.tables.factory import create_income_table, create_expense_table
 from finance.gui.widgets.account_activity import AccountWidget
 
-from finance.gui.widgets.pie_chart import BarChart
+from finance.gui.widgets.bar_chart import BarChart
+from finance.gui.widgets.monthly_overview import MonthlyOverview
 from finance.gui.widgets.toolbar import Toolbar
-from finance.gui.widgets.transfers import TransferTableWidget
+from finance.gui.widgets.tables.transfers import TransferTableWidget
 from finance.model.entry import Budget
 
 
@@ -20,12 +24,15 @@ def build_layout(budget: Budget) -> QWidget:
     right_layout = QVBoxLayout()
     right_layout.addWidget(AccountWidget(budget), 2)
     right_layout.addWidget(BarChart(budget), 2)
+    right_layout.addWidget(MonthlyOverview(budget), 1)
 
     left_layout = QVBoxLayout()
     tabs = QTabWidget()
+    # tabs.addTab(Diagram(budget), "Diagram")
     tabs.addTab(create_expense_table(budget), "Expenses")
     tabs.addTab(create_income_table(budget), "Incomes")
     tabs.addTab(TransferTableWidget(budget), "Transfers")
+    tabs.addTab(AccountTableWidget(budget), "Accounts")
     left_layout.addWidget(tabs)
 
     layout.addLayout(left_layout, 12)
@@ -70,6 +77,8 @@ class Application(QApplication):
 
         if budget.path:
             appdata["last_budget"] = budget.path
+
+        self._budget.register_on_update(lambda *args: pprint(self._budget.calculate_balances()))
 
     def _save_budget(self):
         if not self._budget.path:

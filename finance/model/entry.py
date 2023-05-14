@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import List, Union
 
@@ -28,6 +29,22 @@ class Observable:
 
         meths = {'__setattr__': method}
         self.__class__ = type('Observable', (self.__class__,), meths)
+
+
+class AccountType(str, Enum):
+
+    Spending = "Forbrug"
+    Savings = "Opsparing"
+    Income = "Lønkonto"
+    Budget = "Budget"
+
+
+@dataclass
+class Account(Observable):
+
+    name: str
+    owner: str
+    type: AccountType
 
 
 @dataclass
@@ -60,6 +77,14 @@ class EntryGroup(Observable):
     def add_entry(self, entry: Entry):
         self.entries.append(entry)
         entry.register_on_update(lambda x, y, z: self.notify("entries", self.entries))
+        self.notify("entries", self.entries)
+
+    def delete_entry(self, entry: Entry):
+        if entry in self.entries:
+            self.entries.remove(entry)
+            self.notify("entries", self.entries)
+            return True
+        return False
 
     def total_monthly(self):
         return sum(x.monthly() for x in self.entries)
@@ -83,6 +108,7 @@ class Budget(Observable):
     incomes: List[EntryGroup] = field(default_factory=list)
     transfers: List[Transfer] = field(default_factory=list)
     budget_accounts: List[str] = field(default_factory=list)
+    accounts: List[Account] = field(default_factory=list)
     path: Union[Path, str] = None
 
     def total_monthly(self):
@@ -116,11 +142,6 @@ class Budget(Observable):
             result += inc.entries
         return result
 
-    def accounts(self):
-        acc = [x.account for x in self.all_expenses()] + [x.account for x in self.all_incomes()] + \
-              [x.source for x in self.transfers] + [x.destination for x in self.transfers]
-        return list(set(acc))
-
     def save(self, path: str = None):
         if path is not None:
             self.path = path
@@ -153,6 +174,9 @@ class Budget(Observable):
         for b_acc in data["budget_accounts"]:
             b.budget_accounts.append(b_acc)
 
+        for acc in data["accounts"]:
+            b.accounts.append(Account(**acc))
+        
         return b
 
     @staticmethod
@@ -162,3 +186,42 @@ class Budget(Observable):
             b = Budget.from_dict(data)
             b.path = os.path.abspath(path)
             return b
+
+    def delete(self, entry: Union[Entry, Transfer]):
+        if isinstance(entry, Entry):
+            for x in self.incomes + self.expenses:
+                if x.delete_entry(entry):
+                    break
+        elif isinstance(entry, Transfer):
+            if entry in self.transfers:
+                self.transfers.remove(entry)
+                self.notify("transfers", self.transfers)
+
+    def calculate_balances(self):
+        result = {x.name: 0 for x in self.accounts}
+
+        for x in self.expenses:
+            for e in x.entries:
+                try:
+                    result[e.account] -= e.monthly()
+                except KeyError:
+                    print("Expense", e)
+
+        for x in self.incomes:
+            for e in x.entries:
+                try:
+                    result[e.account] += e.monthly()
+                except KeyError:
+                    print("Income", e)
+
+        for x in self.transfers:
+            try:
+                result[x.source] -= x.amount
+            except KeyError:
+                print("Transfer, source", x)
+            try:
+                result[x.destination] += x.amount
+            except KeyError:
+                print("Transfer, dest", x)
+
+        return result
