@@ -198,30 +198,31 @@ class Budget(Observable):
                 self.notify("transfers", self.transfers)
 
     def calculate_balances(self):
-        result = {x.name: 0 for x in self.accounts}
-
+        expense_result = {x.name: 0 for x in self.accounts}
+        income_result = {x.name: 0 for x in self.accounts}
+        transfer_result = {x.name: 0 for x in self.accounts}
         for x in self.expenses:
             for e in x.entries:
                 try:
-                    result[e.account] -= e.monthly()
+                    expense_result[e.account] -= e.monthly()
                 except KeyError:
                     print("Expense", e)
 
         for x in self.incomes:
             for e in x.entries:
                 try:
-                    result[e.account] += e.monthly()
+                    income_result[e.account] += e.monthly()
                 except KeyError:
                     print("Income", e)
 
         for x in self.transfers:
             try:
-                result[x.source] -= x.amount
+                transfer_result[x.source] -= x.amount
             except KeyError:
                 print("Transfer, source", x)
             try:
-                result[x.destination] += x.amount
+                transfer_result[x.destination] += x.amount
             except KeyError:
                 print("Transfer, dest", x)
 
-        return result
+        return expense_result, income_result, transfer_result

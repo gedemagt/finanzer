@@ -8,7 +8,7 @@ from finance.gui.widgets.entry_prop_table_item import ProppedTableWidget
 from finance.gui.widgets.helpers import create_enum_combobox
 from finance.model.entry import Budget, Account, AccountType
 
-headers = ["Navn", "Ejer", "Type", "Balance"]
+headers = ["Navn", "Ejer", "Type", "Før udgifter", "Efter udgifter"]
 
 
 class AccountTableWidget(QtWidgets.QWidget):
@@ -48,15 +48,23 @@ class AccountTableWidget(QtWidgets.QWidget):
         btn.clicked.connect(partial(self.add_new))
 
     def draw_account(self, t: Account, row) -> int:
-        balances = self.budget.calculate_balances()
-        balance_widget = QTableWidgetItem(f"{balances[t.name]:0.2f}")
-        balance_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
-        balance_widget.setFlags(~Qt.ItemIsEditable)
+        expense_balances, income_balances, transfer_balances = self.budget.calculate_balances()
+
+        before = income_balances[t.name] + transfer_balances[t.name]
+
+        balance_before_widget = QTableWidgetItem(f"{before:0.2f}")
+        balance_before_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        balance_before_widget.setFlags(~Qt.ItemIsEditable)
+
+        balance_after_widget = QTableWidgetItem(f"{before + expense_balances[t.name]:0.2f}")
+        balance_after_widget.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        balance_after_widget.setFlags(~Qt.ItemIsEditable)
 
         self.table.setItem(row, 0, ProppedTableWidget(t, "name"))
         self.table.setItem(row, 1, ProppedTableWidget(t, "owner"))
         self.table.setCellWidget(row, 2, create_enum_combobox(t, "type", AccountType))
-        self.table.setItem(row, 3, balance_widget)
+        self.table.setItem(row, 3, balance_before_widget)
+        self.table.setItem(row, 4, balance_after_widget)
 
         row += 1
         return row
