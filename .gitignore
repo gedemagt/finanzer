@@ -1,3 +1,6 @@
 .idea
 **/app_data
 **__pycache__
+*.spec
+build
+dist

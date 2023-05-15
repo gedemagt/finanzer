@@ -1,13 +1,14 @@
-from collections import defaultdict
 from datetime import datetime
 
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox, QTabWidget, QLabel
-import numpy as np
 
 from appdata import appdata
+
+from finance.gui.widgets.helpers import MONTHS
 from finance.model.entry import Budget
-from finance.utils import MONTHS
+from finance.utils.monthly_overview import monthly, expected_saldo, get_monthly_movements
 
 
 def item(val):
@@ -16,13 +17,13 @@ def item(val):
     else:
         val = str(val)
     _item = QTableWidgetItem(val)
-    _item.setTextAlignment(QtCore.Qt.AlignRight)
+    _item.setTextAlignment(Qt.AlignRight)
     return _item
 
 
 class MonthlyMovements(QtWidgets.QWidget):
 
-    def __init__(self, budget: Budget, block_size=4):
+    def __init__(self, budget: Budget, block_size=3):
         super().__init__()
 
         self.budget = budget
@@ -51,7 +52,6 @@ class MonthlyMovements(QtWidgets.QWidget):
             layer = QtWidgets.QVBoxLayout()
             self._labels.append(label)
 
-            # layout.addLayout(inner)
             self._list_widgets.append(table)
             layer.addWidget(label)
             layer.addWidget(table)
@@ -62,6 +62,7 @@ class MonthlyMovements(QtWidgets.QWidget):
 
         self._account = None
 
+        self.budget.register_on_update(lambda *args: self.draw_account(self._account))
         self.combo_box.currentIndexChanged.connect(self.selectionchange)
 
     def selectionchange(self, i):
@@ -71,16 +72,10 @@ class MonthlyMovements(QtWidgets.QWidget):
     def draw_account(self, account: str):
         self._account = account
 
-        groups = defaultdict(list)
-
-        for entry in self.budget.all_expenses():
-            if entry.account == self._account:
-                for m in entry.pay_months():
-                    if entry.payment_size > 0:
-                        groups[m].append(entry)
-
         start = self._block * self._block_size
         end = start + self._block_size
+        groups = get_monthly_movements(self.budget, self._account, range(start, end+1))
+
         for idx, month in enumerate(MONTHS[start:end]):
             list_widget = self._list_widgets[idx]
             self._labels[idx].setText(month)
@@ -91,10 +86,10 @@ class MonthlyMovements(QtWidgets.QWidget):
             entries = groups[idx + start]
             list_widget.setRowCount(len(entries) + 1)
             total = 0
-            for row, k in enumerate(sorted(entries, key=lambda e: e.payment_period)):
-                list_widget.setItem(row, 0, QTableWidgetItem(f"{k.name}"))
-                list_widget.setItem(row, 1, item(f"{k.payment_size}"))
-                total += k.payment_size
+            for row, entry in enumerate(sorted(entries, key=lambda e: e.payment_period)):
+                list_widget.setItem(row, 0, QTableWidgetItem(f"{entry.name}"))
+                list_widget.setItem(row, 1, item(f"{entry.payment_size}"))
+                total += entry.payment_size
 
             list_widget.setItem(len(entries), 0, QTableWidgetItem(f"Total"))
             list_widget.setItem(len(entries), 1, item(f"{total}"))
@@ -113,7 +108,9 @@ class AccountWidget(QtWidgets.QWidget):
 
         self.combo_box = QComboBox()
         self.combo_box.addItems(self.budget.budget_accounts)
-        self.combo_box.setCurrentText(appdata["selected_budget"])
+
+        self.combo_box.setCurrentText(appdata.get("selected_budget", None))
+
         self.combo_box.currentIndexChanged.connect(self.selectionchange)
         self.layout.addWidget(self.combo_box)
 
@@ -131,6 +128,7 @@ class AccountWidget(QtWidgets.QWidget):
 
         self.draw_account(self.combo_box.currentText())
         self._movements.draw_account(self.combo_box.currentText())
+        self.budget.register_on_update(lambda *args: self.draw_account(self.combo_box.currentText()))
 
     def selectionchange(self, i):
         appdata["selected_budget"] = self.combo_box.currentText()
@@ -139,33 +137,19 @@ class AccountWidget(QtWidgets.QWidget):
 
     def draw_account(self, account: str):
 
-        monthly_expenses = np.zeros(12)
-        monthly_incomes = np.zeros(12)
-
-        for e in [_e for _e in self.budget.all_expenses() if _e.account == account]:
-            for m in e.pay_months():
-                monthly_expenses[m] += (e.payment_size + e.payment_fee)
-
-        for t in self.budget.transfers:
-            if t.source == account:
-                monthly_expenses += t.amount
-            elif t.destination == account:
-                monthly_incomes += t.amount
+        monthly_expenses, monthly_incomes = monthly(self.budget, account)
 
         average_expense = sum(monthly_expenses) / 12
         average_income = sum(monthly_incomes) / 12
 
-        saldos = np.zeros(12)
-        saldos[0] = -monthly_expenses[0]
-        for i in range(1, 12):
-            saldos[i] = saldos[i - 1] - monthly_expenses[i] + monthly_incomes[i]
-
-        offset = min(saldos)
-        saldos -= offset
+        diff = sum(monthly_incomes) - sum(monthly_expenses)
 
         self.table.setItem(0, 0, item("Gennemsnit"))
         self.table.setItem(0, 1, item(average_expense))
         self.table.setItem(0, 2, item(average_income))
+        self.table.setItem(0, 3, item(diff))
+
+        saldos = expected_saldo(monthly_expenses, monthly_incomes)
 
         for row, (m, e, i, s) in enumerate(zip(MONTHS, monthly_expenses, monthly_incomes, saldos)):
             self.table.setItem(row + 1, 0, item(m))
