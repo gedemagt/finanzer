@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QLayout
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QLayout
 
 from finance.model.entry import Budget
 

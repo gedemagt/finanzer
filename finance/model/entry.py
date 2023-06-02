@@ -65,7 +65,7 @@ class Entry(Observable):
 
     def pay_months(self):
         return sorted(
-            [(self.first_payment_month + x * self.payment_period - 1) % 12 for x in range(12 // self.payment_period)]
+            [(self.first_payment_month + x * self.payment_period) % 12 for x in range(12 // self.payment_period)]
         )
 
 
