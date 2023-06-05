@@ -1,8 +1,12 @@
+from uuid import uuid4
+
 from appdata import appdata
+from dash import ALL, Input
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
-    NoOutputTransform, Trigger, Output, Input, State
+    NoOutputTransform, Trigger, Output
 
 import dash_mantine_components as dmc
+from dash_extensions.snippets import get_triggered
 from dash_iconify import DashIconify
 
 from finance.model.entry import Budget
@@ -10,6 +14,7 @@ from finance.webapp import expense_income_graph, income_table, transfer_table, a
     movements
 from finance.webapp import expense_table
 from finance.webapp import saldo_graph
+from finance.webapp.state import get_budget, budgets, set_budget
 
 app = DashProxy(
     transforms=[
@@ -17,14 +22,8 @@ app = DashProxy(
     ],
     external_stylesheets=[
         'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css'
-    ]
+    ], suppress_callback_exceptions=True
 )
-
-try:
-    budget = Budget.load(appdata["last_budget"])
-except (KeyError, FileNotFoundError):
-    budget = Budget("My Budget")
-
 
 @app.callback(
     Trigger("save-btn", "n_clicks"),
@@ -32,7 +31,7 @@ except (KeyError, FileNotFoundError):
     prevent_initial_call=True
 )
 def save_budget():
-    budget.save()
+    get_budget().save()
     return True
 
 
@@ -45,9 +44,40 @@ def show_save():
     return False
 
 
+@app.callback(
+    Trigger(dict(type="select-budget", budget=ALL), "n_clicks"),
+    Output("change-store", "data"),
+    prevent_initial_call=True
+)
+def select_budget():
+    t = get_triggered()
+    budget_idx = t.id["budget"]
+    set_budget(budget_idx)
+    return str(uuid4())
+
+
+@app.callback(
+    Input("add-budget-btn", "n_clicks"),
+    Output("budget-list", "children"),
+    Output("selected-budget", "data", allow_duplicate=True)
+)
+def select_budget(n_clicks):
+    if n_clicks is not None:
+        budgets.append(Budget("New budget"))
+    return [
+        dmc.NavLink(
+            id=dict(type="select-budget", budget=idx),
+            label=budget.name,
+            icon=DashIconify(icon="bi:house-door-fill", height=16),
+            active=True
+        ) for idx, budget in enumerate(budgets)
+    ], len(budgets)-1
+
+
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='change-store', data="Erik123", storage_type='local'),
+    dcc.Store(id='selected-budget', data=0, storage_type='local'),
     dmc.Header(
         height=50, children=[
             dmc.ActionIcon(
@@ -64,6 +94,18 @@ app.layout = html.Div([
     html.Div(id='page-content', children=[
         dmc.Grid([
             dmc.Col([
+                html.Div(
+                    children=[
+                        html.Div(id="budget-list"),
+                        dmc.NavLink(
+                            id="add-budget-btn",
+                            label="Add budget",
+                            icon=DashIconify(icon="bi:plus-fill", height=16),
+                        )
+                    ]
+                )
+            ], span=1),
+            dmc.Col([
                 dmc.Tabs(
                     [
                         dmc.TabsList(
@@ -74,15 +116,15 @@ app.layout = html.Div([
                                 dmc.Tab("Konti", value="accounts")
                             ]
                         ),
-                        dmc.TabsPanel(expense_table.init(app, budget), value="expenses"),
-                        dmc.TabsPanel(income_table.init(app, budget), value="incomes"),
-                        dmc.TabsPanel(transfer_table.init(app, budget), value="transfers"),
-                        dmc.TabsPanel(accounts_table.init(app, budget), value="accounts")
+                        dmc.TabsPanel(expense_table.init(app), value="expenses"),
+                        dmc.TabsPanel(income_table.init(app), value="incomes"),
+                        dmc.TabsPanel(transfer_table.init(app), value="transfers"),
+                        dmc.TabsPanel(accounts_table.init(app), value="accounts")
                     ],
                     value="expenses",
                     m="sm"
                 )
-            ], span=7),
+            ], span=6),
             dmc.Col([
                 html.Div(id="upper-right", children=[
                     dmc.Tabs(
@@ -94,16 +136,16 @@ app.layout = html.Div([
                                     dmc.Tab("Månedsudgifter", value="movements")
                                 ]
                             ),
-                            dmc.TabsPanel(expense_income_graph.init(app, budget), value="overview"),
-                            dmc.TabsPanel(saldo_graph.init(app, budget), value="saldo"),
-                            dmc.TabsPanel(movements.init(app, budget), value="movements")
+                            dmc.TabsPanel(expense_income_graph.init(app), value="overview"),
+                            dmc.TabsPanel(saldo_graph.init(app), value="saldo"),
+                            dmc.TabsPanel(movements.init(app), value="movements")
                         ],
                         value="saldo",
                         m="sm"
                     ),
                 ]),
                 dmc.Container([
-                    balance_summary.init(app, budget)
+                    balance_summary.init(app)
                 ], m="sm")
             ], span=5)
         ])

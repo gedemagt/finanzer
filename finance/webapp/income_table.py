@@ -1,4 +1,3 @@
-import logging
 from dataclasses import asdict
 from uuid import uuid4
 
@@ -8,11 +7,12 @@ from dash_extensions.snippets import get_triggered
 
 from finance.model.entry import Budget, EntryGroup, Entry
 
-from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger
+from dash_extensions.enrich import html, Output, DashProxy, Trigger, Input
 import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.state import get_budget
 
 
 def create_data_table_data(entry_group: EntryGroup):
@@ -81,12 +81,10 @@ def create_table(budget: Budget):
             ], value=entry_group.name)
         )
 
-    return dmc.Accordion(children=children, chevronPosition="left", value=budget.incomes[0].name)
+    return dmc.Accordion(children=children, chevronPosition="left", value=budget.incomes[0].name if budget.incomes else None)
 
 
-def create_callbacks(app: DashProxy, budget: Budget):
-
-    list_to_act_on = budget.incomes
+def create_callbacks(app: DashProxy):
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
@@ -96,7 +94,8 @@ def create_callbacks(app: DashProxy, budget: Budget):
     )
     def update_graphs():
 
-        print("inc")
+        list_to_act_on = get_budget().incomes
+
         t = get_triggered()
         entry_grp_name = t.id['grp']
         try:
@@ -116,13 +115,16 @@ def create_callbacks(app: DashProxy, budget: Budget):
 
     @app.callback(
         Output('incomes', 'children'),
+        Input('selected-budget', 'data'),
         Trigger(dict(type='add-income', grp=ALL), 'n_clicks'),
         Trigger('change-store', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs():
+    def update_graphs(budget_idx: int):
 
         t = get_triggered()
+        budget = get_budget(budget_idx)
+        list_to_act_on = budget.incomes
 
         if isinstance(t.id, dict) and t.id['type'] == 'add-income':
             entry_grp_name = t.id['grp']
@@ -132,10 +134,6 @@ def create_callbacks(app: DashProxy, budget: Budget):
         return create_table(budget)
 
 
-def create_layout(budget: Budget):
-    return html.Div(id="incomes", children=[create_table(budget)])
-
-
-def init(app: DashProxy, budget: Budget):
-    create_callbacks(app, budget)
-    return create_layout(budget)
+def init(app: DashProxy):
+    create_callbacks(app)
+    return html.Div(id="incomes")

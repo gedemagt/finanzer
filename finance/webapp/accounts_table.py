@@ -4,10 +4,11 @@ from dash.exceptions import PreventUpdate
 
 from finance.model.entry import Budget, AccountType
 
-from dash_extensions.enrich import html, Input, Output, DashProxy
+from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.state import get_budget
 
 
 def create_data_table_data(budget: Budget):
@@ -63,7 +64,7 @@ def create_data_table(budget: Budget):
     )
 
 
-def create_callbacks(app: DashProxy, budget: Budget):
+def create_callbacks(app: DashProxy):
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
@@ -72,21 +73,26 @@ def create_callbacks(app: DashProxy, budget: Budget):
         prevent_initial_call=True
     )
     def update_graphs(data, data_previous):
+        budget = get_budget()
         if data and data_previous and data != data_previous:
             handle_update(data_previous, data, budget.transfers, "Accounts")
-            print("Motherfucker")
             return str(uuid4())
         else:
             raise PreventUpdate()
 
+    @app.callback(
+        Output('accounts', 'children'),
+        Input('selected-budget', 'data'),
+        Trigger('change-store', 'data')
+    )
+    def update(budget_idx: int):
+        budget = get_budget(budget_idx)
+        return [
+            create_data_table(budget),
+            create_add_btn("add-transfer")
+        ]
 
-def create_layout(budget: Budget):
-    return html.Div(id="accounts", children=[
-        create_data_table(budget),
-        create_add_btn("add-account")
-    ])
 
-
-def init(app: DashProxy, budget: Budget):
-    create_callbacks(app, budget)
-    return create_layout(budget)
+def init(app: DashProxy):
+    create_callbacks(app)
+    return html.Div(id="accounts")

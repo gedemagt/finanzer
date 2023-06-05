@@ -8,11 +8,12 @@ from dash_extensions.snippets import get_triggered
 
 from finance.model.entry import Budget, EntryGroup, Entry, Account
 
-from dash_extensions.enrich import html, Output, DashProxy, Trigger
+from dash_extensions.enrich import html, Output, DashProxy, Trigger, State
 import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.state import get_budget
 
 
 def create_data_table_data(entry_group: EntryGroup):
@@ -96,7 +97,7 @@ def create_data_table(entry_group: EntryGroup, accounts: List[Account]):
     )
 
 
-def create_table(budget: Budget):
+def create_table(budget: Budget, selected=None):
 
     children = []
     for entry_group in budget.expenses:
@@ -118,14 +119,14 @@ def create_table(budget: Budget):
         )
 
     return dmc.Accordion(
+        id='expense-accordion',
         children=children,
-        chevronPosition="left"
+        chevronPosition="left",
+        value=selected
     )
 
 
-def create_callbacks(app: DashProxy, budget: Budget):
-
-    list_to_act_on = budget.expenses
+def create_callbacks(app: DashProxy):
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
@@ -134,7 +135,14 @@ def create_callbacks(app: DashProxy, budget: Budget):
         prevent_initial_call=True
     )
     def update_graphs():
+
+        budget = get_budget()
+        list_to_act_on = budget.expenses
+
         t = get_triggered()
+        if t.id is None:
+            raise PreventUpdate()
+
         entry_grp_name = t.id['grp']
         try:
             entry_group = next(x for x in list_to_act_on if x.name == entry_grp_name)
@@ -157,24 +165,27 @@ def create_callbacks(app: DashProxy, budget: Budget):
         Trigger(dict(type='add-expense', grp=ALL), 'n_clicks'),
         Trigger('save-btn', 'n_clicks'),
         Trigger('change-store', 'data'),
+        State('expense-accordion', 'value'),
         prevent_initial_call=True
     )
-    def update_graphs():
+    def update_graphs(selected):
 
         t = get_triggered()
+        budget = get_budget()
+        list_to_act_on = budget.expenses
 
         if isinstance(t.id, dict) and t.id['type'] == 'add-expense':
             entry_grp_name = t.id['grp']
             grp = next(x for x in list_to_act_on if x.name == entry_grp_name)
             grp.entries.append(Entry("New entry...", 0, 1, 1, 0, "BS", budget.accounts[0].name, "", ""))
 
-        return create_table(budget)
+        return create_table(budget, selected)
 
 
 def create_layout(budget: Budget):
     return html.Div(id="expenses", children=[create_table(budget)])
 
 
-def init(app: DashProxy, budget: Budget):
-    create_callbacks(app, budget)
-    return create_layout(budget)
+def init(app: DashProxy):
+    create_callbacks(app)
+    return create_layout(get_budget())
