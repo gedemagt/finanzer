@@ -13,7 +13,7 @@ import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
-from finance.webapp.state import get_budget
+from finance.webapp.state import repo
 
 
 def create_data_table_data(entry_group: EntryGroup):
@@ -112,6 +112,10 @@ def create_table(budget: Budget, selected=None):
                     ]
                 ),
                 dmc.AccordionPanel([
+                    dmc.Group([
+                        dmc.Button("Edit", size="xs"),
+                        dmc.Button("Delete", size="xs")
+                    ], position="right"),
                     create_data_table(entry_group, budget.accounts),
                     create_add_btn(dict(type="add-expense", grp=entry_group.name))
                 ])
@@ -132,11 +136,12 @@ def create_callbacks(app: DashProxy):
         Output('change-store', 'data', allow_duplicate=True),
         Trigger(dict(type='expense-table', grp=ALL), 'data'),
         Trigger(dict(type='expense-table', grp=ALL), 'data_previous'),
+        State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs():
+    def update_graphs(budget_idx: int):
 
-        budget = get_budget()
+        budget = repo.get_budget(budget_idx)
         list_to_act_on = budget.expenses
 
         t = get_triggered()
@@ -156,7 +161,7 @@ def create_callbacks(app: DashProxy):
 
         if new_data and old_data and new_data != old_data:
             handle_update(old_data, new_data, entries, entry_grp_name)
-            return str(uuid4())
+            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
         else:
             raise PreventUpdate()
 
@@ -166,12 +171,13 @@ def create_callbacks(app: DashProxy):
         Trigger('save-btn', 'n_clicks'),
         Trigger('change-store', 'data'),
         State('expense-accordion', 'value'),
+        State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(selected):
+    def update_graphs(selected, budget_idx: int):
 
         t = get_triggered()
-        budget = get_budget()
+        budget = repo.get_budget(budget_idx)
         list_to_act_on = budget.expenses
 
         if isinstance(t.id, dict) and t.id['type'] == 'add-expense':
@@ -188,4 +194,4 @@ def create_layout(budget: Budget):
 
 def init(app: DashProxy):
     create_callbacks(app)
-    return create_layout(get_budget())
+    return create_layout(repo.get_budget())

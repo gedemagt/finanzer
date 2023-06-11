@@ -5,7 +5,7 @@ from finance.model.entry import Budget
 import plotly.graph_objects as go
 
 from finance.utils.monthly_overview import monthly, expected_saldo
-from finance.webapp.state import get_budget
+from finance.webapp.state import repo
 
 
 def create_figure(budget: Budget):
@@ -40,6 +40,6 @@ def init(app: DashProxy):
         Output("saldo-graph", "figure")
     )
     def _on_change(budget_idx: int):
-        return create_figure(get_budget(budget_idx))
+        return create_figure(repo.get_budget(budget_idx))
 
     return dcc.Graph(id="saldo-graph")

@@ -6,7 +6,7 @@ from finance.gui.widgets.helpers import MONTHS
 from finance.model.entry import Budget
 import dash_mantine_components as dmc
 from finance.utils.monthly_overview import get_monthly_movements
-from finance.webapp.state import get_budget
+from finance.webapp.state import repo
 
 
 def create_movements(budget: Budget):
@@ -65,7 +65,7 @@ def init(app: DashProxy):
         Output("movements", "children")
     )
     def _on_change(budget_idx: int):
-        return [create_movements(get_budget(budget_idx))]
+        return [create_movements(repo.get_budget(budget_idx))]
 
     return html.Div([
         html.Div(id="movements")

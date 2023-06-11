@@ -5,11 +5,11 @@ from dash.exceptions import PreventUpdate
 
 from finance.model.entry import Budget
 
-from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger
+from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger, State
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
-from finance.webapp.state import get_budget
+from finance.webapp.state import repo
 
 
 def create_data_table(budget: Budget):
@@ -61,16 +61,17 @@ def create_callbacks(app: DashProxy):
         Output('change-store', 'data', allow_duplicate=True),
         Input('transfer-table', 'data'),
         Input('transfer-table', 'data_previous'),
+        State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(data, data_previous):
+    def update_graphs(data, data_previous, budget_idx: int):
 
-        budget = get_budget()
+        budget = repo.get_budget(budget_idx)
 
         if data and data_previous and data != data_previous:
             handle_update(data_previous, data, budget.transfers, "Transfers")
 
-            return str(uuid4())
+            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
         else:
             raise PreventUpdate()
 
@@ -80,7 +81,7 @@ def create_callbacks(app: DashProxy):
         Trigger('change-store', 'data')
     )
     def update(budget_idx: int):
-        budget = get_budget(budget_idx)
+        budget = repo.get_budget(budget_idx)
         return [
             create_data_table(budget),
             create_add_btn("add-transfer")

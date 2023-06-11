@@ -7,12 +7,12 @@ from dash_extensions.snippets import get_triggered
 
 from finance.model.entry import Budget, EntryGroup, Entry
 
-from dash_extensions.enrich import html, Output, DashProxy, Trigger, Input
+from dash_extensions.enrich import html, Output, DashProxy, Trigger, Input, State
 import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
-from finance.webapp.state import get_budget
+from finance.webapp.state import repo
 
 
 def create_data_table_data(entry_group: EntryGroup):
@@ -90,11 +90,12 @@ def create_callbacks(app: DashProxy):
         Output('change-store', 'data', allow_duplicate=True),
         Trigger(dict(type='income-table', grp=ALL), 'data'),
         Trigger(dict(type='income-table', grp=ALL), 'data_previous'),
+        State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs():
+    def update_graphs(budget_idx: int):
 
-        list_to_act_on = get_budget().incomes
+        list_to_act_on = repo.get_budget(budget_idx).incomes
 
         t = get_triggered()
         entry_grp_name = t.id['grp']
@@ -109,7 +110,7 @@ def create_callbacks(app: DashProxy):
         old_data = t.data_previous
         if new_data and old_data and new_data != old_data:
             handle_update(old_data, new_data, entries, entry_grp_name)
-            return str(uuid4())
+            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
         else:
             raise PreventUpdate()
 
@@ -123,7 +124,7 @@ def create_callbacks(app: DashProxy):
     def update_graphs(budget_idx: int):
 
         t = get_triggered()
-        budget = get_budget(budget_idx)
+        budget = repo.get_budget(budget_idx)
         list_to_act_on = budget.incomes
 
         if isinstance(t.id, dict) and t.id['type'] == 'add-income':
