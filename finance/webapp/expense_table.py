@@ -1,6 +1,5 @@
 from dataclasses import asdict
 from typing import List
-from uuid import uuid4
 
 from dash import ALL
 from dash.exceptions import PreventUpdate
@@ -13,6 +12,7 @@ import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
 
 
@@ -113,8 +113,7 @@ def create_table(budget: Budget, selected=None):
                 ),
                 dmc.AccordionPanel([
                     dmc.Group([
-                        dmc.Button("Edit", size="xs"),
-                        dmc.Button("Delete", size="xs")
+                        dmc.Button("Omdøb", id=dict(type="rename-expense", grp=entry_group.name), size="xs", mb="5px", variant="outline", color="green")
                     ], position="right"),
                     create_data_table(entry_group, budget.accounts),
                     create_add_btn(dict(type="add-expense", grp=entry_group.name))
@@ -139,7 +138,7 @@ def create_callbacks(app: DashProxy):
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(budget_idx: int):
+    def update_graphs(budget_idx: int) -> ChangeStoreModel:
 
         budget = repo.get_budget(budget_idx)
         list_to_act_on = budget.expenses
@@ -161,7 +160,7 @@ def create_callbacks(app: DashProxy):
 
         if new_data and old_data and new_data != old_data:
             handle_update(old_data, new_data, entries, entry_grp_name)
-            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
+            return ChangeStoreModel(budget_idx)
         else:
             raise PreventUpdate()
 

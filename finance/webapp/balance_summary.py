@@ -1,8 +1,11 @@
-from dash_extensions.enrich import DashProxy, Trigger, Output, html, Input
+from dash_extensions.enrich import Trigger, Output, html, Input, DashBlueprint
 from finance.model.entry import Budget
 import dash_mantine_components as dmc
 
 from finance.webapp.state import repo
+
+
+balance_summary_bp = DashBlueprint()
 
 
 def create_summary(budget: Budget):
@@ -52,15 +55,15 @@ def create_summary(budget: Budget):
     ])
 
 
-def init(app: DashProxy):
-    @app.callback(
-        Input('selected-budget', 'data'),
-        Trigger("change-store", "data"),
-        Output("balance-summary", "children")
-    )
-    def _on_change(budget_idx: int):
-        return [create_summary(repo.get_budget(budget_idx))]
+@balance_summary_bp.callback(
+    Input('selected-budget', 'data'),
+    Trigger("change-store", "data"),
+    Output("balance-summary", "children")
+)
+def _on_change(budget_idx: int):
+    return [create_summary(repo.get_budget(budget_idx))]
 
-    return html.Div([
-        html.Div(id="balance-summary", children=[create_summary(repo.get_budget())])
-    ])
+
+balance_summary_bp.layout = html.Div([
+    html.Div(id="balance-summary")
+])

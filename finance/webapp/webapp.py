@@ -4,7 +4,7 @@ from appdata import appdata
 from dash import ALL, Input
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
-    NoOutputTransform, Trigger, Output, State
+    NoOutputTransform, Trigger, Output, State, PrefixIdTransform
 
 import dash_mantine_components as dmc
 from dash_extensions.snippets import get_triggered
@@ -14,11 +14,15 @@ from finance.webapp import expense_income_graph, income_table, transfer_table, a
     movements
 from finance.webapp import expense_table
 from finance.webapp import saldo_graph
+from finance.webapp.accounts_table import bp
+from finance.webapp.balance_summary import balance_summary_bp
+from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
+from finance.webapp.transform import DataclassTransform
 
 app = DashProxy(
     transforms=[
-        TriggerTransform(), NoOutputTransform()
+        TriggerTransform(), NoOutputTransform(), DataclassTransform()
     ],
     external_stylesheets=[
         'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css'
@@ -60,8 +64,9 @@ def show_save(budget_idx: int, dirty: list):
     State("dirty", "data"),
     prevent_initial_call=True
 )
-def mark_dirty(change_store: dict, dirty: list):
-    if (idx := change_store.get("budget_idx")) is not None:
+def mark_dirty(change_store: ChangeStoreModel, dirty: list):
+    idx = change_store.budget_idx
+    if idx is not None:
         if idx not in dirty:
             dirty.append(idx)
     return dirty
@@ -221,7 +226,7 @@ app.layout = html.Div([
                         dmc.TabsPanel(expense_table.init(app), value="expenses"),
                         dmc.TabsPanel(income_table.init(app), value="incomes"),
                         dmc.TabsPanel(transfer_table.init(app), value="transfers"),
-                        dmc.TabsPanel(accounts_table.init(app), value="accounts")
+                        dmc.TabsPanel(bp.embed(app), value="accounts")
                     ],
                     value="expenses",
                     m="sm"
@@ -229,7 +234,7 @@ app.layout = html.Div([
             ], span=6),
             dmc.Col([
                 dmc.Container([
-                    balance_summary.init(app)
+                    balance_summary_bp.embed(app)
                 ], m="sm"),
                 html.Div(id="upper-right", children=[
                     dmc.Tabs(
@@ -241,7 +246,7 @@ app.layout = html.Div([
                                     dmc.Tab("Månedsudgifter", value="movements")
                                 ]
                             ),
-                            dmc.TabsPanel(expense_income_graph.init(app), value="overview"),
+                            dmc.TabsPanel(expense_income_graph.bp.embed(app), value="overview"),
                             dmc.TabsPanel(saldo_graph.init(app), value="saldo"),
                             dmc.TabsPanel(movements.init(app), value="movements")
                         ],

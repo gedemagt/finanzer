@@ -1,14 +1,16 @@
-from uuid import uuid4
-
 from dash.exceptions import PreventUpdate
 
 from finance.model.entry import Budget, AccountType
 
-from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger, State
+from dash_extensions.enrich import html, Input, Output, Trigger, State, DashBlueprint
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
+
+
+bp = DashBlueprint()
 
 
 def create_data_table_data(budget: Budget):
@@ -64,36 +66,33 @@ def create_data_table(budget: Budget):
     )
 
 
-def create_callbacks(app: DashProxy):
-
-    @app.callback(
-        Output('change-store', 'data', allow_duplicate=True),
-        Input('accounts-table', 'data'),
-        Input('accounts-table', 'data_previous'),
-        State('selected-budget', 'data'),
-        prevent_initial_call=True
-    )
-    def update_graphs(data, data_previous, budget_idx):
-        budget = repo.get_budget(budget_idx)
-        if data and data_previous and data != data_previous:
-            handle_update(data_previous, data, budget.transfers, "Accounts")
-            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
-        else:
-            raise PreventUpdate()
-
-    @app.callback(
-        Output('accounts', 'children'),
-        Input('selected-budget', 'data'),
-        Trigger('change-store', 'data')
-    )
-    def update(budget_idx: int):
-        budget = repo.get_budget(budget_idx)
-        return [
-            create_data_table(budget),
-            create_add_btn("add-transfer")
-        ]
+@bp.callback(
+    Output('change-store', 'data', allow_duplicate=True),
+    Input('accounts-table', 'data'),
+    Input('accounts-table', 'data_previous'),
+    State('selected-budget', 'data'),
+    prevent_initial_call=True
+)
+def update_graphs(data: dict, data_previous: dict, budget_idx: int) -> ChangeStoreModel:
+    budget = repo.get_budget(budget_idx)
+    if data and data_previous and data != data_previous:
+        handle_update(data_previous, data, budget.transfers, "Accounts")
+        return ChangeStoreModel(budget_idx)
+    else:
+        raise PreventUpdate()
 
 
-def init(app: DashProxy):
-    create_callbacks(app)
-    return html.Div(id="accounts")
+@bp.callback(
+    Output('accounts', 'children'),
+    Input('selected-budget', 'data'),
+    Trigger('change-store', 'data')
+)
+def update(budget_idx: int):
+    budget = repo.get_budget(budget_idx)
+    return [
+        create_data_table(budget),
+        create_add_btn("add-transfer")
+    ]
+
+
+bp.layout = html.Div(id="accounts")

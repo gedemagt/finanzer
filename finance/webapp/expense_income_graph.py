@@ -1,10 +1,12 @@
-from dash_extensions.enrich import DashProxy, Trigger, dcc, Output, html, Input
+from dash_extensions.enrich import DashProxy, Trigger, dcc, Output, html, Input, DashBlueprint
 from finance.model.entry import Budget
 
 
 import plotly.graph_objects as go
 
 from finance.webapp.state import repo
+
+bp = DashBlueprint()
 
 
 def create_figure(budget: Budget):
@@ -42,16 +44,15 @@ def create_figure(budget: Budget):
     return fig
 
 
-def init(app: DashProxy):
+@bp.callback(
+    Input('selected-budget', 'data'),
+    Trigger("change-store", "data"),
+    Output("income-graph", "figure")
+)
+def _on_change(budget_idx: int):
+    return create_figure(repo.get_budget(budget_idx))
 
-    @app.callback(
-        Input('selected-budget', 'data'),
-        Trigger("change-store", "data"),
-        Output("income-graph", "figure")
-    )
-    def _on_change(budget_idx: int):
-        return create_figure(repo.get_budget(budget_idx))
 
-    return html.Div([
-        dcc.Graph(id="income-graph")
-    ])
+bp.layout = html.Div([
+    dcc.Graph(id="income-graph")
+])

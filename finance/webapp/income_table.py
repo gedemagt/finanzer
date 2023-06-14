@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from uuid import uuid4
 
 from dash import ALL
 from dash.exceptions import PreventUpdate
@@ -12,6 +11,7 @@ import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
 
 
@@ -93,7 +93,7 @@ def create_callbacks(app: DashProxy):
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(budget_idx: int):
+    def update_graphs(budget_idx: int) -> ChangeStoreModel:
 
         list_to_act_on = repo.get_budget(budget_idx).incomes
 
@@ -110,7 +110,7 @@ def create_callbacks(app: DashProxy):
         old_data = t.data_previous
         if new_data and old_data and new_data != old_data:
             handle_update(old_data, new_data, entries, entry_grp_name)
-            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
+            return ChangeStoreModel(budget_idx)
         else:
             raise PreventUpdate()
 

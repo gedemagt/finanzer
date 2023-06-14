@@ -9,6 +9,7 @@ from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger, Stat
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
 
 
@@ -64,14 +65,14 @@ def create_callbacks(app: DashProxy):
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(data, data_previous, budget_idx: int):
+    def update_graphs(data: dict, data_previous: dict, budget_idx: int) -> ChangeStoreModel:
 
         budget = repo.get_budget(budget_idx)
 
         if data and data_previous and data != data_previous:
             handle_update(data_previous, data, budget.transfers, "Transfers")
 
-            return dict(budget_idx=budget_idx, correlation=str(uuid4()))
+            return ChangeStoreModel(budget_idx)
         else:
             raise PreventUpdate()
 
