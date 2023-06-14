@@ -4,18 +4,16 @@ from appdata import appdata
 from dash import ALL, Input
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
-    NoOutputTransform, Trigger, Output, State, PrefixIdTransform
+    NoOutputTransform, Trigger, Output, State
 
 import dash_mantine_components as dmc
 from dash_extensions.snippets import get_triggered
 from dash_iconify import DashIconify
 
-from finance.webapp import expense_income_graph, income_table, transfer_table, accounts_table, balance_summary, \
-    movements
+from finance.webapp import expense_income_graph, income_table, transfer_table, balance_summary, \
+    movements, accounts_table
 from finance.webapp import expense_table
 from finance.webapp import saldo_graph
-from finance.webapp.accounts_table import bp
-from finance.webapp.balance_summary import balance_summary_bp
 from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
 from finance.webapp.transform import DataclassTransform
@@ -43,7 +41,6 @@ def save_budget(budget_idx: int, dirty: list):
     repo.get_budget(budget_idx).save()
     if budget_idx in dirty:
         dirty.remove(budget_idx)
-    print("Erik", dirty, budget_idx)
     return dirty
 
 
@@ -54,7 +51,6 @@ def save_budget(budget_idx: int, dirty: list):
     prevent_initial_call=True
 )
 def show_save(budget_idx: int, dirty: list):
-    print(budget_idx, dirty)
     return budget_idx not in dirty
 
 
@@ -226,7 +222,7 @@ app.layout = html.Div([
                         dmc.TabsPanel(expense_table.init(app), value="expenses"),
                         dmc.TabsPanel(income_table.init(app), value="incomes"),
                         dmc.TabsPanel(transfer_table.init(app), value="transfers"),
-                        dmc.TabsPanel(bp.embed(app), value="accounts")
+                        dmc.TabsPanel(accounts_table.bp.embed(app), value="accounts")
                     ],
                     value="expenses",
                     m="sm"
@@ -234,7 +230,7 @@ app.layout = html.Div([
             ], span=6),
             dmc.Col([
                 dmc.Container([
-                    balance_summary_bp.embed(app)
+                    balance_summary.bp.embed(app)
                 ], m="sm"),
                 html.Div(id="upper-right", children=[
                     dmc.Tabs(

@@ -5,7 +5,7 @@ import dash_mantine_components as dmc
 from finance.webapp.state import repo
 
 
-balance_summary_bp = DashBlueprint()
+bp = DashBlueprint()
 
 
 def create_summary(budget: Budget):
