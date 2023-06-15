@@ -75,16 +75,56 @@ def create_table(budget: Budget):
                     ]
                 ),
                 dmc.AccordionPanel([
+                    dmc.Group([
+                        # dmc.Button("Omdøb", id=dict(type="rename-income", grp=entry_group.name), size="xs", mb="5px",
+                        #            variant="outline", color="green"),
+                        dmc.Button("Delete", id=dict(type="delete-income", grp=entry_group.name), size="xs", mb="5px",
+                                   variant="outline", color="red")
+                    ], position="right"),
                     create_data_table(entry_group, budget),
                     create_add_btn(dict(type="add-income", grp=entry_group.name))
                 ])
             ], value=entry_group.name)
         )
 
-    return dmc.Accordion(children=children, chevronPosition="left", value=budget.incomes[0].name if budget.incomes else None)
+    return html.Div([
+        dmc.Accordion(children=children, chevronPosition="left", value=budget.incomes[0].name if budget.incomes else None),
+        create_add_btn('add-income-group')
+    ])
 
 
 def create_callbacks(app: DashProxy):
+    @app.callback(
+        Output('change-store', 'data', allow_duplicate=True),
+        Trigger(dict(type="delete-income", grp=ALL), 'n_clicks'),
+        State('selected-budget', 'data'),
+        prevent_initial_call=True
+    )
+    def add_expense_grp(budget_idx: int):
+
+        t = get_triggered()
+        if t.n_clicks is None:
+            raise PreventUpdate()
+        entry_grp_name = t.id['grp']
+
+        budget = repo.get_budget(budget_idx)
+        idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].name == entry_grp_name)
+        budget.incomes.pop(idx)
+
+        return ChangeStoreModel(budget_idx)
+
+    @app.callback(
+        Output('change-store', 'data', allow_duplicate=True),
+        Input('add-income-group', 'n_clicks'),
+        State('selected-budget', 'data'),
+        prevent_initial_call=True
+    )
+    def add_income_grp(n_clicks: int, budget_idx: int):
+        if n_clicks is None:
+            raise PreventUpdate()
+        budget = repo.get_budget(budget_idx)
+        budget.incomes.append(EntryGroup(name=f"New group"))
+        return ChangeStoreModel(budget_idx)
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),

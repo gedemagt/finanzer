@@ -55,7 +55,7 @@ def create_summary(budget: Budget):
     ])
 
 
-@balance_summary_bp.callback(
+@bp.callback(
     Input('selected-budget', 'data'),
     Trigger("change-store", "data"),
     Output("balance-summary", "children")
@@ -64,6 +64,6 @@ def _on_change(budget_idx: int):
     return [create_summary(repo.get_budget(budget_idx))]
 
 
-balance_summary_bp.layout = html.Div([
+bp.layout = html.Div([
     html.Div(id="balance-summary")
 ])

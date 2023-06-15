@@ -7,7 +7,7 @@ from dash_extensions.snippets import get_triggered
 
 from finance.model.entry import Budget, EntryGroup, Entry, Account
 
-from dash_extensions.enrich import html, Output, DashProxy, Trigger, State
+from dash_extensions.enrich import html, Output, DashProxy, Trigger, State, Input
 import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
@@ -113,7 +113,9 @@ def create_table(budget: Budget, selected=None):
                 ),
                 dmc.AccordionPanel([
                     dmc.Group([
-                        dmc.Button("Omdøb", id=dict(type="rename-expense", grp=entry_group.name), size="xs", mb="5px", variant="outline", color="green")
+                        dmc.Button("Omdøb", id=dict(type="rename-expense", grp=entry_group.name), size="xs", mb="5px", variant="outline", color="green"),
+                        dmc.Button("Delete", id=dict(type="delete-expense", grp=entry_group.name), size="xs", mb="5px",
+                                   variant="outline", color="red")
                     ], position="right"),
                     create_data_table(entry_group, budget.accounts),
                     create_add_btn(dict(type="add-expense", grp=entry_group.name))
@@ -121,15 +123,50 @@ def create_table(budget: Budget, selected=None):
             ], value=entry_group.name)
         )
 
-    return dmc.Accordion(
-        id='expense-accordion',
-        children=children,
-        chevronPosition="left",
-        value=selected
-    )
+    return html.Div([
+        dmc.Accordion(
+            id='expense-accordion',
+            children=children,
+            chevronPosition="left",
+            value=selected
+        ),
+        create_add_btn('add-expense-group')
+    ])
 
 
 def create_callbacks(app: DashProxy):
+
+    @app.callback(
+        Output('change-store', 'data', allow_duplicate=True),
+        Trigger(dict(type="delete-expense", grp=ALL), 'n_clicks'),
+        State('selected-budget', 'data'),
+        prevent_initial_call=True
+    )
+    def add_expense_grp(budget_idx: int):
+        t = get_triggered()
+        if t.n_clicks is None:
+            raise PreventUpdate()
+
+        entry_grp_name = t.id['grp']
+
+        budget = repo.get_budget(budget_idx)
+        idx = next(i for i in range(0, len(budget.expenses)) if budget.expenses[i].name == entry_grp_name)
+        budget.expenses.pop(idx)
+
+        return ChangeStoreModel(budget_idx)
+
+    @app.callback(
+        Output('change-store', 'data', allow_duplicate=True),
+        Input('add-expense-group', 'n_clicks'),
+        State('selected-budget', 'data'),
+        prevent_initial_call=True
+    )
+    def add_expense_grp(n_clicks: int, budget_idx: int):
+        if n_clicks is None:
+            raise PreventUpdate()
+        budget = repo.get_budget(budget_idx)
+        budget.expenses.append(EntryGroup(name=f"New group"))
+        return ChangeStoreModel(budget_idx)
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),

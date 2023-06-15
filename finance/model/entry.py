@@ -7,7 +7,6 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Union
 
-
 class Observable:
 
     def __init__(self):
@@ -151,6 +150,7 @@ class Budget(Observable):
                 f.write(json.dumps(self.to_dict(), indent=4))
 
     def to_dict(self) -> dict:
+        self.path = str(self.path)
         return dataclasses.asdict(self)
 
     @staticmethod
