@@ -35,7 +35,7 @@ app = DashProxy(
     prevent_initial_call=True
 )
 def save_budget(budget_idx: str, dirty: list):
-    repo.get_budget(budget_idx).save()
+    repo.save_budget(repo.get_budget(budget_idx))
     if budget_idx in dirty:
         dirty.remove(budget_idx)
     return dirty
