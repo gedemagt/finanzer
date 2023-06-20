@@ -207,7 +207,7 @@ app.layout = html.Div([
                         )
                     ]
                 )
-            ], span=2),
+            ], span=1),
             dmc.Col([
                 dmc.Tabs(
                     [
@@ -250,7 +250,7 @@ app.layout = html.Div([
                         m="sm"
                     ),
                 ])
-            ], span=4)
+            ], span=5)
         ])
     ], style=dict(height="calc(100vh - 50px)"))
 ])

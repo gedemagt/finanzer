@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import uuid4
 
 from finance.model.entry import Budget
 
@@ -30,7 +31,7 @@ class BudgetRepository:
         return len(self.budgets) - 1
 
     def create_budget(self, name: str) -> int:
-        budget = Budget(name)
+        budget = Budget(name, str(uuid4()))
         if self.parent_directory:
             budget.path = self.parent_directory / f"{name}.json"
         self.budgets.append(budget)

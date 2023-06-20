@@ -11,6 +11,7 @@ import dash_mantine_components as dmc
 from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
+from finance.webapp.modal_input import ModalInput
 from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo
 
@@ -34,7 +35,7 @@ def create_data_table(entry_group: EntryGroup, budget: Budget):
     ]
 
     return dash_table.DataTable(
-        id={'type': 'incomes-table', 'grp': entry_group.name},
+        id={'type': 'incomes-table', 'grp': entry_group.id},
         data=create_data_table_data(entry_group),
         columns=columns,
         editable=True,
@@ -76,39 +77,36 @@ def create_table(budget: Budget):
                 ),
                 dmc.AccordionPanel([
                     dmc.Group([
-                        # dmc.Button("Omdøb", id=dict(type="rename-income", grp=entry_group.name), size="xs", mb="5px",
-                        #            variant="outline", color="green"),
-                        dmc.Button("Delete", id=dict(type="delete-income", grp=entry_group.name), size="xs", mb="5px",
+
+                        dmc.Button("Omdøb", id=dict(type="rename-income", grp=entry_group.id), size="xs", mb="5px", variant="outline", color="green"),
+                        dmc.Button("Delete", id=dict(type="delete-income", grp=entry_group.id), size="xs", mb="5px",
                                    variant="outline", color="red")
                     ], position="right"),
                     create_data_table(entry_group, budget),
-                    create_add_btn(dict(type="add-income", grp=entry_group.name))
+                    create_add_btn(dict(type="add-income", grp=entry_group.id))
                 ])
-            ], value=entry_group.name)
+            ], value=entry_group.id)
         )
 
-    return html.Div([
-        dmc.Accordion(children=children, chevronPosition="left", value=budget.incomes[0].name if budget.incomes else None),
-        create_add_btn('add-income-group')
-    ])
+    return children
 
 
 def create_callbacks(app: DashProxy):
+
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
         Trigger(dict(type="delete-income", grp=ALL), 'n_clicks'),
-        State('selected-budget', 'data'),
-        prevent_initial_call=True
+        State('selected-budget', 'data')
     )
-    def add_expense_grp(budget_idx: int):
+    def delete_income_group(budget_idx: int):
 
         t = get_triggered()
-        if t.n_clicks is None:
+        if t.id is None or t.n_clicks is None:
             raise PreventUpdate()
-        entry_grp_name = t.id['grp']
+        entry_grp_id = t.id['grp']
 
         budget = repo.get_budget(budget_idx)
-        idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].name == entry_grp_name)
+        idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].id == entry_grp_name)
         budget.incomes.pop(idx)
 
         return ChangeStoreModel(budget_idx)
@@ -135,12 +133,13 @@ def create_callbacks(app: DashProxy):
     )
     def update_graphs(budget_idx: int) -> ChangeStoreModel:
 
-        list_to_act_on = repo.get_budget(budget_idx).incomes
-
         t = get_triggered()
-        entry_grp_name = t.id['grp']
+        if t.id is None:
+            raise PreventUpdate()
+
+        entry_grp_id = t.id['grp']
         try:
-            entry_group = next(x for x in list_to_act_on if x.name == entry_grp_name)
+            entry_group = next(x for x in repo.get_budget(budget_idx).incomes if x.id == entry_grp_id)
         except StopIteration:
             raise PreventUpdate()
 
@@ -148,33 +147,56 @@ def create_callbacks(app: DashProxy):
 
         new_data = t.data
         old_data = t.data_previous
+
         if new_data and old_data and new_data != old_data:
-            handle_update(old_data, new_data, entries, entry_grp_name)
+            handle_update(old_data, new_data, entries, entry_grp_id)
             return ChangeStoreModel(budget_idx)
         else:
             raise PreventUpdate()
 
     @app.callback(
-        Output('incomes', 'children'),
-        Input('selected-budget', 'data'),
+        Output('income-accordion', 'children'),
+        Output('income-accordion', 'value'),
         Trigger(dict(type='add-income', grp=ALL), 'n_clicks'),
         Trigger('change-store', 'data'),
-        prevent_initial_call=True
+        Input('selected-budget', 'data'),
+        State('expense-accordion', 'value')
     )
-    def update_graphs(budget_idx: int):
+    def update_graphs(budget_idx: int, selected):
 
         t = get_triggered()
         budget = repo.get_budget(budget_idx)
-        list_to_act_on = budget.incomes
 
         if isinstance(t.id, dict) and t.id['type'] == 'add-income':
-            entry_grp_name = t.id['grp']
-            grp = next(x for x in list_to_act_on if x.name == entry_grp_name)
+            entry_grp_id = t.id['grp']
+            grp = next(x for x in budget.incomes if x.id == entry_grp_id)
             grp.entries.append(Entry("New entry...", 0, 1, 1, 0, "BS", budget.accounts[0].name, "", ""))
 
-        return create_table(budget)
+        return create_table(budget), selected
 
 
 def init(app: DashProxy):
+
+    modal = ModalInput(dict(type="rename-income", grp=ALL), "Omdøb")
+
+    @modal.modal_callback(
+        Output('change-store', 'data', allow_duplicate=True),
+        State('selected-budget', 'data')
+    )
+    def on_modal_input(value, who, budget_idx: int):
+        budget = repo.get_budget(budget_idx)
+        income_grp = next(x for x in budget.incomes if x.id == who['grp'])
+
+        income_grp.name = value
+
+        return ChangeStoreModel()
+
     create_callbacks(app)
-    return html.Div(id="incomes")
+    return html.Div([
+        modal.embed(app),
+        dmc.Accordion(
+            id='income-accordion',
+            chevronPosition="left"
+        ),
+        create_add_btn('add-income-group')
+    ])

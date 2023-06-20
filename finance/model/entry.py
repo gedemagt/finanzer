@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import List, Union
+from uuid import uuid4
+
 
 class Observable:
 
@@ -44,6 +46,7 @@ class Account(Observable):
     name: str
     owner: str
     type: AccountType
+    id: str = field(default_factory=lambda: str(uuid4()))
 
 
 @dataclass
@@ -58,6 +61,7 @@ class Entry(Observable):
     account: str = ""
     tag: str = ""
     owner: str = ""
+    id: str = field(default_factory=lambda: str(uuid4()))
 
     def monthly(self):
         return (self.payment_size + self.payment_fee) / self.payment_period
@@ -72,6 +76,7 @@ class Entry(Observable):
 class EntryGroup(Observable):
     name: str
     entries: List[Entry] = field(default_factory=list)
+    id: str = field(default_factory=lambda: str(uuid4()))
 
     def add_entry(self, entry: Entry):
         self.entries.append(entry)
@@ -97,6 +102,7 @@ class Transfer(Observable):
     destination: str
     amount: float
     owner: str = ""
+    id: str = field(default_factory=lambda: str(uuid4()))
 
 
 @dataclass
@@ -109,6 +115,7 @@ class Budget(Observable):
     budget_accounts: List[str] = field(default_factory=list)
     accounts: List[Account] = field(default_factory=list)
     path: Union[Path, str] = None
+    id: str = field(default_factory=lambda: str(uuid4()))
 
     def total_monthly(self):
         return sum(x.total_monthly() for x in self.expenses)
@@ -122,6 +129,12 @@ class Budget(Observable):
             result += exp.entries
 
         return result
+
+    def expense_grp_from_id(self, _id: str):
+        return next(x for x in self.expenses if x.id == _id)
+
+    def income_grp_from_id(self, _id: str):
+        return next(x for x in self.incomes if x.id == _id)
 
     def add_expense_group(self, entry_group: EntryGroup):
         entry_group.register_on_update(lambda x, y, z: self.notify("expenses", self.expenses))
@@ -147,7 +160,7 @@ class Budget(Observable):
         if self.path:
             logging.info(f"Saving budget to {self.path}")
             with open(self.path, "w+") as f:
-                f.write(json.dumps(self.to_dict(), indent=4))
+                f.write(json.dumps(self.to_dict(), indent=4, ensure_ascii=False))
 
     def to_dict(self) -> dict:
         self.path = str(self.path)
@@ -155,15 +168,16 @@ class Budget(Observable):
 
     @staticmethod
     def from_dict(data: dict):
-        b = Budget(data["name"])
+        b = Budget(data["name"], id=data["id"])
         for e_grp in data["expenses"]:
-            grp = EntryGroup(e_grp["name"])
+            grp = EntryGroup(e_grp["name"], id=e_grp.get("id", str(uuid4())))
+
             for e in e_grp["entries"]:
                 grp.add_entry(Entry(**e))
             b.add_expense_group(grp)
 
         for e_grp in data["incomes"]:
-            grp = EntryGroup(e_grp["name"])
+            grp = EntryGroup(e_grp["name"], id=e_grp.get("id", str(uuid4())))
             for e in e_grp["entries"]:
                 grp.add_entry(Entry(**e))
             b.add_incomes_group(grp)

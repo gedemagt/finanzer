@@ -1,4 +1,4 @@
-from dash_extensions.enrich import DashProxy, Trigger, dcc, Output, html, Input, DashBlueprint
+from dash_extensions.enrich import Trigger, dcc, Output, html, Input, DashBlueprint
 from finance.model.entry import Budget
 
 
