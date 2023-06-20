@@ -1,6 +1,5 @@
 from uuid import uuid4
 
-from appdata import appdata
 from dash import ALL, Input
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
@@ -27,8 +26,6 @@ app = DashProxy(
     ], suppress_callback_exceptions=True
 )
 
-repo.set_directory(appdata.get("budget_directory", "budgets"))
-
 
 @app.callback(
     Trigger("save-btn", "n_clicks"),
@@ -37,7 +34,7 @@ repo.set_directory(appdata.get("budget_directory", "budgets"))
     State("dirty", "data"),
     prevent_initial_call=True
 )
-def save_budget(budget_idx: int, dirty: list):
+def save_budget(budget_idx: str, dirty: list):
     repo.get_budget(budget_idx).save()
     if budget_idx in dirty:
         dirty.remove(budget_idx)
@@ -50,7 +47,7 @@ def save_budget(budget_idx: int, dirty: list):
     Output("save-btn", "disabled"),
     prevent_initial_call=True
 )
-def show_save(budget_idx: int, dirty: list):
+def show_save(budget_idx: str, dirty: list):
     return budget_idx not in dirty
 
 
@@ -97,14 +94,15 @@ def select_budget():
     Input("selected-budget", "data"),
     Output("budget-list", "children")
 )
-def select_budget(selected_idx: int):
+def select_budget(selected_idx: str):
+
     return [
         dmc.NavLink(
             id=dict(type="select-budget", budget=idx),
             label=budget.name,
             icon=DashIconify(icon="bi:house-door-fill", height=16),
             active=idx == selected_idx
-        ) for idx, budget in enumerate(repo.budgets)
+        ) for idx, budget in repo.budgets.items()
     ]
 
 
@@ -133,9 +131,11 @@ def modal_demo(selected, budget_name, copy_from):
     t = get_triggered()
     if t.id == "modal-submit-button":
         if copy_from is not None:
-            idx = repo.copy_budget(copy_from, budget_name)
+            new_budget = repo.get_budget(copy_from).copy()
+            repo.save_budget(new_budget)
+            idx = new_budget.id
         else:
-            idx = repo.create_budget(budget_name)
+            idx = repo.create_budget(budget_name).id
     else:
         idx = selected
 
@@ -145,7 +145,7 @@ def modal_demo(selected, budget_name, copy_from):
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='change-store', data={}, storage_type='memory'),
-    dcc.Store(id='selected-budget', data=0, storage_type='memory'),
+    dcc.Store(id='selected-budget', data=list(repo.budgets.keys())[0], storage_type='memory'),
     dcc.Store(id='dirty', data=[], storage_type='memory'),
     dmc.Header(
         height=50, children=[
@@ -187,7 +187,7 @@ app.layout = html.Div([
                                     value=None,
                                     data=[
                                         {"value": idx, "label": budget.name}
-                                        for idx, budget in enumerate(repo.budgets)
+                                        for idx, budget in repo.budgets.items()
                                     ],
                                 ),
                                 dmc.Space(h=20),

@@ -67,7 +67,6 @@ class ModalInput(DashBlueprint):
             prevent_initial_call=True
         )
         def handle_modal_click():
-            print(get_triggered().__dict__)
 
             if get_triggered().n_clicks is None:
                 raise PreventUpdate()

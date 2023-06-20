@@ -2,10 +2,9 @@ from datetime import datetime
 
 from dash_extensions.enrich import DashProxy, Trigger, Output, html, Input
 
-from finance.gui.widgets.helpers import MONTHS
 from finance.model.entry import Budget
 import dash_mantine_components as dmc
-from finance.utils.monthly_overview import get_monthly_movements
+from finance.utils.monthly_overview import get_monthly_movements, MONTHS
 from finance.webapp.state import repo
 
 
@@ -64,7 +63,7 @@ def init(app: DashProxy):
         Trigger("change-store", "data"),
         Output("movements", "children")
     )
-    def _on_change(budget_idx: int):
+    def _on_change(budget_idx: str):
         return [create_movements(repo.get_budget(budget_idx))]
 
     return html.Div([

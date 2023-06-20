@@ -65,7 +65,7 @@ def create_callbacks(app: DashProxy):
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(data: dict, data_previous: dict, budget_idx: int) -> ChangeStoreModel:
+    def update_graphs(data: dict, data_previous: dict, budget_idx: str) -> ChangeStoreModel:
 
         budget = repo.get_budget(budget_idx)
 
@@ -81,7 +81,7 @@ def create_callbacks(app: DashProxy):
         Input('selected-budget', 'data'),
         Trigger('change-store', 'data')
     )
-    def update(budget_idx: int):
+    def update(budget_idx: str):
         budget = repo.get_budget(budget_idx)
         return [
             create_data_table(budget),

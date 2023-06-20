@@ -114,8 +114,12 @@ class Budget(Observable):
     transfers: List[Transfer] = field(default_factory=list)
     budget_accounts: List[str] = field(default_factory=list)
     accounts: List[Account] = field(default_factory=list)
-    path: Union[Path, str] = None
     id: str = field(default_factory=lambda: str(uuid4()))
+
+    def copy(self):
+        budget = Budget.from_dict(self.to_dict())
+        budget.id = str(uuid4())
+        return budget
 
     def total_monthly(self):
         return sum(x.total_monthly() for x in self.expenses)
@@ -154,16 +158,12 @@ class Budget(Observable):
             result += inc.entries
         return result
 
-    def save(self, path: str = None):
-        if path is not None:
-            self.path = path
-        if self.path:
-            logging.info(f"Saving budget to {self.path}")
-            with open(self.path, "w+") as f:
-                f.write(json.dumps(self.to_dict(), indent=4, ensure_ascii=False))
+    def save(self, path: str | Path):
+        logging.info(f"Saving budget to {path}")
+        with open(path, "w+") as f:
+            f.write(json.dumps(self.to_dict(), indent=4, ensure_ascii=False))
 
     def to_dict(self) -> dict:
-        self.path = str(self.path)
         return dataclasses.asdict(self)
 
     @staticmethod

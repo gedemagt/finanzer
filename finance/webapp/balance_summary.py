@@ -60,7 +60,7 @@ def create_summary(budget: Budget):
     Trigger("change-store", "data"),
     Output("balance-summary", "children")
 )
-def _on_change(budget_idx: int):
+def _on_change(budget_idx: str):
     return [create_summary(repo.get_budget(budget_idx))]
 
 

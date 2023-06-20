@@ -73,7 +73,7 @@ def create_data_table(budget: Budget):
     State('selected-budget', 'data'),
     prevent_initial_call=True
 )
-def update_graphs(data: dict, data_previous: dict, budget_idx: int) -> ChangeStoreModel:
+def update_graphs(data: dict, data_previous: dict, budget_idx: str) -> ChangeStoreModel:
     budget = repo.get_budget(budget_idx)
     if data and data_previous and data != data_previous:
         handle_update(data_previous, data, budget.transfers, "Accounts")
@@ -87,7 +87,7 @@ def update_graphs(data: dict, data_previous: dict, budget_idx: int) -> ChangeSto
     Input('selected-budget', 'data'),
     Trigger('change-store', 'data')
 )
-def update(budget_idx: int):
+def update(budget_idx: str):
     budget = repo.get_budget(budget_idx)
     return [
         create_data_table(budget),

@@ -49,7 +49,7 @@ def create_figure(budget: Budget):
     Trigger("change-store", "data"),
     Output("income-graph", "figure")
 )
-def _on_change(budget_idx: int):
+def _on_change(budget_idx: str):
     return create_figure(repo.get_budget(budget_idx))
 
 

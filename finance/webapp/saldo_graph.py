@@ -39,7 +39,7 @@ def init(app: DashProxy):
         Trigger("change-store", "data"),
         Output("saldo-graph", "figure")
     )
-    def _on_change(budget_idx: int):
+    def _on_change(budget_idx: str):
         return create_figure(repo.get_budget(budget_idx))
 
     return dcc.Graph(id="saldo-graph")

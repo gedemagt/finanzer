@@ -77,13 +77,16 @@ def create_table(budget: Budget):
                 ),
                 dmc.AccordionPanel([
                     dmc.Group([
-
-                        dmc.Button("Omdøb", id=dict(type="rename-income", grp=entry_group.id), size="xs", mb="5px", variant="outline", color="green"),
+                        dmc.Button(
+                            "Tilføj", id=dict(type="add-income", grp=entry_group.id),
+                            size="xs", mb="5px", variant="outline"
+                        ),
+                        dmc.Button("Omdøb", id=dict(type="rename-income", grp=entry_group.id), size="xs", mb="5px",
+                                   variant="outline", color="green"),
                         dmc.Button("Delete", id=dict(type="delete-income", grp=entry_group.id), size="xs", mb="5px",
                                    variant="outline", color="red")
                     ], position="right"),
-                    create_data_table(entry_group, budget),
-                    create_add_btn(dict(type="add-income", grp=entry_group.id))
+                    create_data_table(entry_group, budget)
                 ])
             ], value=entry_group.id)
         )
@@ -98,7 +101,7 @@ def create_callbacks(app: DashProxy):
         Trigger(dict(type="delete-income", grp=ALL), 'n_clicks'),
         State('selected-budget', 'data')
     )
-    def delete_income_group(budget_idx: int):
+    def delete_income_group(budget_idx: str):
 
         t = get_triggered()
         if t.id is None or t.n_clicks is None:
@@ -106,7 +109,7 @@ def create_callbacks(app: DashProxy):
         entry_grp_id = t.id['grp']
 
         budget = repo.get_budget(budget_idx)
-        idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].id == entry_grp_name)
+        idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].id == entry_grp_id)
         budget.incomes.pop(idx)
 
         return ChangeStoreModel(budget_idx)
@@ -117,7 +120,7 @@ def create_callbacks(app: DashProxy):
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def add_income_grp(n_clicks: int, budget_idx: int):
+    def add_income_grp(n_clicks: int, budget_idx: str):
         if n_clicks is None:
             raise PreventUpdate()
         budget = repo.get_budget(budget_idx)
@@ -131,7 +134,7 @@ def create_callbacks(app: DashProxy):
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
-    def update_graphs(budget_idx: int) -> ChangeStoreModel:
+    def update_graphs(budget_idx: str) -> ChangeStoreModel:
 
         t = get_triggered()
         if t.id is None:
@@ -160,9 +163,9 @@ def create_callbacks(app: DashProxy):
         Trigger(dict(type='add-income', grp=ALL), 'n_clicks'),
         Trigger('change-store', 'data'),
         Input('selected-budget', 'data'),
-        State('expense-accordion', 'value')
+        State('income-accordion', 'value')
     )
-    def update_graphs(budget_idx: int, selected):
+    def update_graphs(budget_idx: str, selected):
 
         t = get_triggered()
         budget = repo.get_budget(budget_idx)
@@ -183,7 +186,7 @@ def init(app: DashProxy):
         Output('change-store', 'data', allow_duplicate=True),
         State('selected-budget', 'data')
     )
-    def on_modal_input(value, who, budget_idx: int):
+    def on_modal_input(value, who, budget_idx: str):
         budget = repo.get_budget(budget_idx)
         income_grp = next(x for x in budget.incomes if x.id == who['grp'])
 
