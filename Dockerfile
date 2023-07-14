@@ -5,14 +5,16 @@ RUN \
   apk add --no-cache \
     python3 git py3-pip curl
 
-    
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
-RUN git clone -b dash https://github.com/gedemagt/finanzer
+WORKDIR /app
+COPY poetry.lock pyproject.toml /app/
 
-WORKDIR /finanzer
+COPY . /app/
 
 RUN /root/.local/bin/poetry config virtualenvs.create false \
   && /root/.local/bin/poetry install --only main --no-interaction --no-ansi
+
+EXPOSE 8050
 
 CMD [ "python3", "finance/webapp/webapp.py" ]
