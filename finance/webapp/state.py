@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from uuid import uuid4
 
@@ -38,4 +39,4 @@ class BudgetRepository:
         return self.budgets[idx]
 
 
-repo = BudgetRepository(appdata.get("budget_directory", "budgets"))
+repo = BudgetRepository(os.getenv("BUDGET_DIRECTORY", "budgets"))
