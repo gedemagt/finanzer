@@ -129,8 +129,8 @@ def create_callbacks(app: DashProxy):
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
-        Trigger(dict(type='income-table', grp=ALL), 'data'),
-        Trigger(dict(type='income-table', grp=ALL), 'data_previous'),
+        Trigger(dict(type='incomes-table', grp=ALL), 'data'),
+        Trigger(dict(type='incomes-table', grp=ALL), 'data_previous'),
         State('selected-budget', 'data'),
         prevent_initial_call=True
     )
@@ -150,7 +150,6 @@ def create_callbacks(app: DashProxy):
 
         new_data = t.data
         old_data = t.data_previous
-
         if new_data and old_data and new_data != old_data:
             handle_update(old_data, new_data, entries, entry_grp_id)
             return ChangeStoreModel(budget_idx)
