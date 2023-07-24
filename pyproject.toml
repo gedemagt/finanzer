@@ -6,14 +6,11 @@ authors = ["jsjes <jsjes@vestas.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.12"
-numpy = "^1.22.3"
-appdirs = "^1.4.4"
-orjson = "^3.7.2"
-py-appdata = "^0.0.6"
-dash-extensions = "^1.0.0"
-dash-mantine-components = "^0.12.1"
-dash-iconify = "^0.1.2"
-dataclass-wizard = "^0.22.2"
+numpy = "^1.22"
+dash-extensions = "^1.0"
+dash-mantine-components = "^0.12"
+dash-iconify = "^0.1"
+dataclass-wizard = "^0.22"
 
 [tool.poetry.dev-dependencies]
 

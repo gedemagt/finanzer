@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from appdata import appdata
-
 from finance.model.entry import Budget
 
 
