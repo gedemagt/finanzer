@@ -21,6 +21,8 @@ from finance.webapp.transform import DataclassTransform
 flask_app = Flask(__name__)
 
 app = DashProxy(
+    title="Budget",
+    update_title=None,
     server=flask_app,
     transforms=[
         TriggerTransform(), NoOutputTransform(), DataclassTransform()
