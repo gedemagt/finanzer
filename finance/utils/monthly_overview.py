@@ -5,6 +5,21 @@ from finance.model.entry import Budget, Entry
 import numpy as np
 
 
+MONTHS = [
+    "Januar", "Februar", "Marts", "April", "Maj", "Juni",
+    "Juli", "August", "September", "Oktober", "November", "December"
+]
+
+PAYMENT_METHODS = ["BS", "Kort", "MobilePay", "Overførsel"]
+
+PERIODS = {
+    "Månedvis": 1,
+    "Kvartalsvis": 3,
+    "Halvårlig": 6,
+    "Årlig": 12
+}
+
+
 def monthly(budget: Budget, account: str):
     monthly_expenses = np.zeros(12)
     monthly_incomes = np.zeros(12)
