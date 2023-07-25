@@ -1,3 +1,4 @@
+from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, Trigger, dcc, Output, Input
 from finance.model.entry import Budget
 
@@ -5,7 +6,7 @@ from finance.model.entry import Budget
 import plotly.graph_objects as go
 
 from finance.utils.monthly_overview import monthly, expected_saldo
-from finance.webapp.state import repo
+from finance.webapp.state import repo, BudgetNotFoundError
 
 
 def create_figure(budget: Budget):
@@ -40,6 +41,9 @@ def init(app: DashProxy):
         Output("saldo-graph", "figure")
     )
     def _on_change(budget_idx: str):
-        return create_figure(repo.get_budget(budget_idx))
+        try:
+            return create_figure(repo.get_budget(budget_idx))
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
     return dcc.Graph(id="saldo-graph")

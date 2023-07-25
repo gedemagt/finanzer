@@ -1,11 +1,12 @@
 from datetime import datetime
 
+from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, Trigger, Output, html, Input
 
 from finance.model.entry import Budget
 import dash_mantine_components as dmc
 from finance.utils.monthly_overview import get_monthly_movements, MONTHS
-from finance.webapp.state import repo
+from finance.webapp.state import repo, BudgetNotFoundError
 
 
 def create_movements(budget: Budget):
@@ -64,7 +65,10 @@ def init(app: DashProxy):
         Output("movements", "children")
     )
     def _on_change(budget_idx: str):
-        return [create_movements(repo.get_budget(budget_idx))]
+        try:
+            return [create_movements(repo.get_budget(budget_idx))]
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
     return html.Div([
         html.Div(id="movements")

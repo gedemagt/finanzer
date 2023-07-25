@@ -10,7 +10,7 @@ from dash_extensions.enrich import dash_table
 
 from finance.webapp.helpers import handle_update, create_add_btn
 from finance.webapp.models import ChangeStoreModel
-from finance.webapp.state import repo
+from finance.webapp.state import repo, BudgetNotFoundError
 
 
 def create_data_table(budget: Budget):
@@ -66,8 +66,10 @@ def create_callbacks(app: DashProxy):
         prevent_initial_call=True
     )
     def update_graphs(data: dict, data_previous: dict, budget_idx: str) -> ChangeStoreModel:
-
-        budget = repo.get_budget(budget_idx)
+        try:
+            budget = repo.get_budget(budget_idx)
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
         if data and data_previous and data != data_previous:
             handle_update(data_previous, data, budget.transfers, "Transfers")
@@ -82,11 +84,14 @@ def create_callbacks(app: DashProxy):
         Trigger('change-store', 'data')
     )
     def update(budget_idx: str):
-        budget = repo.get_budget(budget_idx)
-        return [
-            create_data_table(budget),
-            create_add_btn("add-transfer")
-        ]
+        try:
+            budget = repo.get_budget(budget_idx)
+            return [
+                create_data_table(budget),
+                create_add_btn("add-transfer")
+            ]
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
 
 def init(app: DashProxy):

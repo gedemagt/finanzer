@@ -1,10 +1,11 @@
+from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import Trigger, dcc, Output, html, Input, DashBlueprint
 from finance.model.entry import Budget
 
 
 import plotly.graph_objects as go
 
-from finance.webapp.state import repo
+from finance.webapp.state import repo, BudgetNotFoundError
 
 bp = DashBlueprint()
 
@@ -50,7 +51,10 @@ def create_figure(budget: Budget):
     Output("income-graph", "figure")
 )
 def _on_change(budget_idx: str):
-    return create_figure(repo.get_budget(budget_idx))
+    try:
+        return create_figure(repo.get_budget(budget_idx))
+    except BudgetNotFoundError:
+        raise PreventUpdate()
 
 
 bp.layout = html.Div([

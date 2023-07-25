@@ -13,7 +13,7 @@ from dash_extensions.enrich import dash_table
 from finance.webapp.helpers import handle_update, create_add_btn
 from finance.webapp.modal_input import ModalInput
 from finance.webapp.models import ChangeStoreModel
-from finance.webapp.state import repo
+from finance.webapp.state import repo, BudgetNotFoundError
 
 
 def create_data_table_data(entry_group: EntryGroup):
@@ -108,11 +108,14 @@ def create_callbacks(app: DashProxy):
             raise PreventUpdate()
         entry_grp_id = t.id['grp']
 
-        budget = repo.get_budget(budget_idx)
-        idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].id == entry_grp_id)
-        budget.incomes.pop(idx)
+        try:
+            budget = repo.get_budget(budget_idx)
+            idx = next(i for i in range(0, len(budget.incomes)) if budget.incomes[i].id == entry_grp_id)
+            budget.incomes.pop(idx)
 
-        return ChangeStoreModel(budget_idx)
+            return ChangeStoreModel(budget_idx)
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
@@ -123,9 +126,12 @@ def create_callbacks(app: DashProxy):
     def add_income_grp(n_clicks: int, budget_idx: str):
         if n_clicks is None:
             raise PreventUpdate()
-        budget = repo.get_budget(budget_idx)
-        budget.incomes.append(EntryGroup(name=f"New group"))
-        return ChangeStoreModel(budget_idx)
+        try:
+            budget = repo.get_budget(budget_idx)
+            budget.incomes.append(EntryGroup(name=f"New group"))
+            return ChangeStoreModel(budget_idx)
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
     @app.callback(
         Output('change-store', 'data', allow_duplicate=True),
@@ -143,7 +149,7 @@ def create_callbacks(app: DashProxy):
         entry_grp_id = t.id['grp']
         try:
             entry_group = next(x for x in repo.get_budget(budget_idx).incomes if x.id == entry_grp_id)
-        except StopIteration:
+        except (StopIteration, BudgetNotFoundError):
             raise PreventUpdate()
 
         entries = entry_group.entries
@@ -165,17 +171,18 @@ def create_callbacks(app: DashProxy):
         State('income-accordion', 'value')
     )
     def update_graphs(budget_idx: str, selected):
+        try:
+            t = get_triggered()
+            budget = repo.get_budget(budget_idx)
 
-        t = get_triggered()
-        budget = repo.get_budget(budget_idx)
+            if isinstance(t.id, dict) and t.id['type'] == 'add-income':
+                entry_grp_id = t.id['grp']
+                grp = next(x for x in budget.incomes if x.id == entry_grp_id)
+                grp.entries.append(Entry("New entry...", 0, 1, 1, 0, "BS", budget.accounts[0].name, "", ""))
 
-        if isinstance(t.id, dict) and t.id['type'] == 'add-income':
-            entry_grp_id = t.id['grp']
-            grp = next(x for x in budget.incomes if x.id == entry_grp_id)
-            grp.entries.append(Entry("New entry...", 0, 1, 1, 0, "BS", budget.accounts[0].name, "", ""))
-
-        return create_table(budget), selected
-
+            return create_table(budget), selected
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
 def init(app: DashProxy):
 
@@ -186,12 +193,15 @@ def init(app: DashProxy):
         State('selected-budget', 'data')
     )
     def on_modal_input(value, who, budget_idx: str):
-        budget = repo.get_budget(budget_idx)
-        income_grp = next(x for x in budget.incomes if x.id == who['grp'])
+        try:
+            budget = repo.get_budget(budget_idx)
+            income_grp = next(x for x in budget.incomes if x.id == who['grp'])
 
-        income_grp.name = value
+            income_grp.name = value
 
-        return ChangeStoreModel()
+            return ChangeStoreModel()
+        except BudgetNotFoundError:
+            raise PreventUpdate()
 
     create_callbacks(app)
     return html.Div([

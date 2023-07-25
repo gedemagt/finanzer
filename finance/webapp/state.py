@@ -5,6 +5,10 @@ from uuid import uuid4
 from finance.model.entry import Budget
 
 
+class BudgetNotFoundError(Exception):
+    pass
+
+
 class BudgetRepository:
 
     def __init__(self, parent_directory: str | Path):
@@ -31,10 +35,14 @@ class BudgetRepository:
         return budget
 
     def delete_budget(self, idx: str):
-        self.budgets.pop(idx)
+        if idx in self.budgets:
+            self.budgets.pop(idx)
 
     def get_budget(self, idx: str):
-        return self.budgets[idx]
+        try:
+            return self.budgets[idx]
+        except KeyError:
+            raise BudgetNotFoundError()
 
 
-repo = BudgetRepository(os.getenv("BUDGET_DIRECTORY", "budgets"))
+repo = BudgetRepository(os.getenv("BUDGET_DIRECTORY", "budgets2"))

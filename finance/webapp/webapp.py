@@ -14,7 +14,7 @@ from finance.webapp import expense_income_graph, income_table, transfer_table, b
 from finance.webapp import expense_table
 from finance.webapp import saldo_graph
 from finance.webapp.models import ChangeStoreModel
-from finance.webapp.state import repo
+from finance.webapp.state import repo, BudgetNotFoundError
 from finance.webapp.transform import DataclassTransform
 
 app = DashProxy(
@@ -35,10 +35,13 @@ app = DashProxy(
     prevent_initial_call=True
 )
 def save_budget(budget_idx: str, dirty: list):
-    repo.save_budget(repo.get_budget(budget_idx))
-    if budget_idx in dirty:
-        dirty.remove(budget_idx)
-    return dirty
+    try:
+        repo.save_budget(repo.get_budget(budget_idx))
+        if budget_idx in dirty:
+            dirty.remove(budget_idx)
+        return dirty
+    except BudgetNotFoundError:
+        raise PreventUpdate()
 
 
 @app.callback(
@@ -145,7 +148,7 @@ def modal_demo(selected, budget_name, copy_from):
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='change-store', data={}, storage_type='memory'),
-    dcc.Store(id='selected-budget', data=list(repo.budgets.keys())[0], storage_type='memory'),
+    dcc.Store(id='selected-budget', data=None, storage_type='memory'),
     dcc.Store(id='dirty', data=[], storage_type='memory'),
     dmc.Header(
         height=50, children=[

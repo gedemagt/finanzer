@@ -1,9 +1,9 @@
+from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import Trigger, Output, html, Input, DashBlueprint
 from finance.model.entry import Budget
 import dash_mantine_components as dmc
 
-from finance.webapp.state import repo
-
+from finance.webapp.state import repo, BudgetNotFoundError
 
 bp = DashBlueprint()
 
@@ -61,7 +61,10 @@ def create_summary(budget: Budget):
     Output("balance-summary", "children")
 )
 def _on_change(budget_idx: str):
-    return [create_summary(repo.get_budget(budget_idx))]
+    try:
+        return [create_summary(repo.get_budget(budget_idx))]
+    except BudgetNotFoundError:
+        raise PreventUpdate()
 
 
 bp.layout = html.Div([
