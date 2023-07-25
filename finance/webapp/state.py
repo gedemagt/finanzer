@@ -45,4 +45,4 @@ class BudgetRepository:
             raise BudgetNotFoundError()
 
 
-repo = BudgetRepository(os.getenv("BUDGET_DIRECTORY", "budgets2"))
+repo = BudgetRepository(os.getenv("BUDGET_DIRECTORY", "budgets"))

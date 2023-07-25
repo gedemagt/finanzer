@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from dash import ALL, Input
+from dash import ALL, Input, Dash
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
     NoOutputTransform, Trigger, Output, State
@@ -17,6 +17,8 @@ from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo, BudgetNotFoundError
 from finance.webapp.transform import DataclassTransform
 
+dash_app = Dash()
+
 app = DashProxy(
     transforms=[
         TriggerTransform(), NoOutputTransform(), DataclassTransform()
@@ -25,6 +27,7 @@ app = DashProxy(
         'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css'
     ], suppress_callback_exceptions=True
 )
+app.hijack(dash_app)
 
 
 @app.callback(
@@ -261,6 +264,6 @@ app.layout = html.Div([
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.DEBUG)
-    app.run_server(
+    dash_app.run_server(
         debug=True
     )
