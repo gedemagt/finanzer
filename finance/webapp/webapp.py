@@ -8,6 +8,7 @@ from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
 import dash_mantine_components as dmc
 from dash_extensions.snippets import get_triggered
 from dash_iconify import DashIconify
+from flask import Flask
 
 from finance.webapp import expense_income_graph, income_table, transfer_table, balance_summary, \
     movements, accounts_table
@@ -17,9 +18,10 @@ from finance.webapp.models import ChangeStoreModel
 from finance.webapp.state import repo, BudgetNotFoundError
 from finance.webapp.transform import DataclassTransform
 
-dash_app = Dash()
+flask_app = Flask(__name__)
 
 app = DashProxy(
+    server=flask_app,
     transforms=[
         TriggerTransform(), NoOutputTransform(), DataclassTransform()
     ],
@@ -27,7 +29,6 @@ app = DashProxy(
         'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css'
     ], suppress_callback_exceptions=True
 )
-app.hijack(dash_app)
 
 
 @app.callback(
@@ -264,6 +265,6 @@ app.layout = html.Div([
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.DEBUG)
-    dash_app.run_server(
+    app.run_server(
         debug=True
     )
