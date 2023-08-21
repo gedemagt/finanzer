@@ -155,6 +155,7 @@ app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='change-store', data={}, storage_type='memory'),
     dcc.Store(id='selected-budget', data=None, storage_type='memory'),
+    dcc.Store(id='selected-block', data=None, storage_type='memory'),
     dcc.Store(id='dirty', data=[], storage_type='memory'),
     dmc.Header(
         height=50, children=[

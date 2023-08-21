@@ -219,24 +219,24 @@ class Budget(Observable):
             for e in x.entries:
                 try:
                     expense_result[e.account] -= e.monthly()
-                except KeyError:
-                    print("Expense", e)
+                except KeyError as exc:
+                    logging.error(f"Could not find expense_result for {e.account}", exc_info=exc)
 
         for x in self.incomes:
             for e in x.entries:
                 try:
                     income_result[e.account] += e.monthly()
-                except KeyError:
-                    print("Income", e)
+                except KeyError as exc:
+                    logging.error(f"Could not find income_result for {e.account}", exc_info=exc)
 
         for x in self.transfers:
             try:
                 transfer_result[x.source] -= x.amount
-            except KeyError:
-                print("Transfer, source", x)
+            except KeyError as exc:
+                logging.error(f"Could not find transfer_result for {x.source}", exc_info=exc)
             try:
                 transfer_result[x.destination] += x.amount
-            except KeyError:
-                print("Transfer, dest", x)
+            except KeyError as exc:
+                logging.error(f"Could not find transfer_result for {x.destination}", exc_info=exc)
 
         return expense_result, income_result, transfer_result
