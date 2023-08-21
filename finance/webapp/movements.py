@@ -23,10 +23,10 @@ def create_movements(budget: Budget, block: int = None):
             dmc.Select(
                 id="block-select",
                 data=[
-                    {"label": "Jan-Mar", "value": 0},
-                    {"label": "Apr-Jun", "value": 1},
-                    {"label": "Jul-Sep", "value": 2},
-                    {"label": "Okt-Dec", "value": 3},
+                    {"label": f"{MONTHS[0]}-{MONTHS[2]}", "value": 0},
+                    {"label": f"{MONTHS[3]}-{MONTHS[5]}", "value": 1},
+                    {"label": f"{MONTHS[6]}-{MONTHS[8]}", "value": 2},
+                    {"label": f"{MONTHS[9]}-{MONTHS[11]}", "value": 3},
                 ],
                 value=block
             )
