@@ -67,8 +67,12 @@ class Entry(Observable):
         return (self.payment_size + self.payment_fee) / self.payment_period
 
     def pay_months(self):
+        """
+        Returns a list of months in which the entry is paid. It is month numbers i.e. January is 1, February is 2 etc.
+        :return:
+        """
         return sorted(
-            [(self.first_payment_month + x * self.payment_period) % 12 for x in range(12 // self.payment_period)]
+            (self.first_payment_month - 1 + x * self.payment_period) % 12 + 1 for x in range(12 // self.payment_period)
         )
 
 

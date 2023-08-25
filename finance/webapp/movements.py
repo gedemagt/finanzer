@@ -9,14 +9,14 @@ from finance.utils.monthly_overview import get_monthly_movements, MONTHS
 from finance.webapp.state import repo, BudgetNotFoundError
 
 
-def create_movements(budget: Budget, block: int = None):
+def create_movements(budget: Budget, quarter: int = None):
 
-    groups = get_monthly_movements(budget, "Budget", range(1, 12))
+    monthly_payments = get_monthly_movements(budget, "Budget", range(1, 13))
 
-    if block is None:
-        block = datetime.now().month // 3 - 1
-    gs = [block*3+1, block*3+2, block*3+3]
-    size = max(len(groups[x]) for x in gs)
+    if quarter is None:
+        quarter = datetime.now().month // 3 - 1
+    months = [quarter * 3 + 1, quarter * 3 + 2, quarter * 3 + 3]
+    size = max(len(monthly_payments[x]) for x in months)
 
     children = [
         dmc.Col([
@@ -28,12 +28,12 @@ def create_movements(budget: Budget, block: int = None):
                     {"label": f"{MONTHS[6]}-{MONTHS[8]}", "value": 2},
                     {"label": f"{MONTHS[9]}-{MONTHS[11]}", "value": 3},
                 ],
-                value=block
+                value=quarter
             )
         ], span=12, mt=3, className="text-center")
     ]
 
-    for g in gs:
+    for month in months:
         header = [
             html.Thead(
                 html.Tr(
@@ -47,20 +47,28 @@ def create_movements(budget: Budget, block: int = None):
         ]
 
         rows = []
-        for x in sorted(groups[g-1], key=lambda _x: (_x.payment_period, _x.name)):
-            rows.append(html.Tr([html.Td(x.name, style={"font-size": "12px"}), html.Td(x.payment_size, style={"text-align": "right", "font-size": "12px"}), html.Td(dmc.Checkbox())]))
-        rows += [html.Tr([html.Td("-"), html.Td("-", style={"text-align": "right"})]) for _ in range(size - len(groups[g-1]))]
+        for x in sorted(monthly_payments[month], key=lambda _x: (_x.payment_period, _x.name)):
+            rows.append(html.Tr([
+                html.Td(x.name, style={"font-size": "12px"}),
+                html.Td(x.payment_size, style={"text-align": "right", "font-size": "12px"}),
+                html.Td(dmc.Checkbox())
+            ]))
+
+        rows += [html.Tr([
+            html.Td("-"),
+            html.Td("-", style={"text-align": "right"})
+        ]) for _ in range(size - len(monthly_payments[month]))]
 
         rows.append(html.Tr([
             html.Td(dmc.Text("Total", weight=700)),
-            html.Td(dmc.Text(sum(x.payment_size for x in groups[g-1]), weight=700), style={"text-align": "right"})
+            html.Td(dmc.Text(sum(x.payment_size for x in monthly_payments[month]), weight=700), style={"text-align": "right"})
         ]))
 
         body = [html.Tbody(rows)]
         children.append(
             dmc.Col([
                 dmc.Card([
-                    dmc.Center(dmc.Text(MONTHS[g-1])),
+                    dmc.Center(dmc.Text(MONTHS[month-1])),
                     dmc.CardSection([
                         dmc.Table(header + body)
                     ])

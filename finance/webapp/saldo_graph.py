@@ -15,11 +15,6 @@ def create_figure(budget: Budget):
 
     monthly_expenses, monthly_incomes = monthly(budget, "Budget")
 
-    # average_expense = sum(monthly_expenses) / 12
-    # average_income = sum(monthly_incomes) / 12
-    #
-    # diff = sum(monthly_incomes) - sum(monthly_expenses)
-
     saldos = expected_saldo(monthly_expenses, monthly_incomes)
 
     fig = go.Figure()
