@@ -25,8 +25,9 @@ def monthly(budget: Budget, account: str):
     monthly_incomes = np.zeros(12)
 
     for e in [_e for _e in budget.all_expenses() if _e.account == account]:
+
         for m in e.pay_months():
-            monthly_expenses[m] += (e.payment_size + e.payment_fee)
+            monthly_expenses[m-1] += (e.payment_size + e.payment_fee)
 
     for t in budget.transfers:
         if t.source == account:
