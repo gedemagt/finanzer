@@ -38,16 +38,27 @@ def monthly(budget: Budget, account: str):
     return monthly_expenses, monthly_incomes
 
 
-def expected_saldo(monthly_expenses, monthly_incomes):
-    saldos = np.zeros(12)
-    saldos[0] = -monthly_expenses[0]
-    for i in range(1, 12):
-        saldos[i] = saldos[i - 1] - monthly_expenses[i] + monthly_incomes[i]
+def expected_saldo(monthly_expenses):
 
-    offset = min(saldos)
-    saldos -= offset
+    n = len(monthly_expenses)
 
-    return saldos
+    saldo = np.zeros(n)
+    avg_expense = np.average(monthly_expenses)
+
+    pivot = np.argmax(monthly_expenses)
+
+    for x in range(n):
+        idx = (x + pivot) % n
+        if monthly_expenses[(x + pivot) % n] < avg_expense:
+            break
+        else:
+            pivot = idx
+
+    for i in range(1, n):
+        idx = (i + pivot) % n
+        saldo[idx] = saldo[idx - 1] - monthly_expenses[idx] + avg_expense
+
+    return saldo
 
 
 def get_monthly_movements(budget: Budget, account: str, months=None) -> Dict[int, List[Entry]]:

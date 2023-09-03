@@ -15,7 +15,7 @@ def create_figure(budget: Budget):
 
     monthly_expenses, monthly_incomes = monthly(budget, "Budget")
 
-    saldos = expected_saldo(monthly_expenses, monthly_incomes)
+    saldos = expected_saldo(monthly_expenses)
 
     fig = go.Figure()
     fig.add_trace(go.Bar(x=months, y=monthly_incomes, name='Income'))
