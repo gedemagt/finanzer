@@ -213,7 +213,7 @@ def create_callbacks(app: DashProxy):
 
         if isinstance(t.id, dict) and t.id['type'] == 'add-expense':
             grp = budget.expense_grp_from_id(t.id['grp'])
-            grp.entries.append(Entry("New entry...", 0, 1, 1, 0, "BS", budget.accounts[0].name, "", ""))
+            grp.entries.append(Entry("New entry...", 0, 1, 1, 0, "BS", budget.accounts[0].name if budget.accounts else "Default", "", ""))
 
         return create_table(budget), selected
 

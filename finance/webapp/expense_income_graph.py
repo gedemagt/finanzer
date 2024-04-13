@@ -13,13 +13,14 @@ bp = DashBlueprint()
 def create_figure(budget: Budget):
     fig = go.Figure()
     total_monthly = sum(x.total_monthly() for x in budget.expenses)
-    for eg in sorted(budget.expenses, key=lambda x: x.total_monthly()):
-        fig.add_trace(go.Bar(
-            x=["Udgifter"], y=[eg.total_monthly()],
-            name=f"({eg.total_monthly() / total_monthly * 100:3.0f}%) {eg.name}",
-            legendgroup="group0",
-            legendgrouptitle_text="Udgifter",
-        ))
+    if total_monthly:
+        for eg in sorted(budget.expenses, key=lambda x: x.total_monthly()):
+            fig.add_trace(go.Bar(
+                x=["Udgifter"], y=[eg.total_monthly()],
+                name=f"({eg.total_monthly() / total_monthly * 100:3.0f}%) {eg.name}",
+                legendgroup="group0",
+                legendgrouptitle_text="Udgifter",
+            ))
 
     if len(budget.incomes) == 1:
         for eg in sorted(budget.incomes[0].entries, key=lambda x: x.monthly()):
