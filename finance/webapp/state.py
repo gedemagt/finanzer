@@ -44,5 +44,8 @@ class BudgetRepository:
         except KeyError:
             raise BudgetNotFoundError()
 
+    def get_budget_path(self, idx: str):
+        return self.parent_directory / f"{idx}.json"
+
 
 repo = BudgetRepository(os.getenv("BUDGET_DIRECTORY", "budgets"))

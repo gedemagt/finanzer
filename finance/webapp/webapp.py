@@ -1,6 +1,9 @@
+import json
+from io import BytesIO
 from uuid import uuid4
 
 from dash import ALL, Input, Dash
+from dash.dcc import Download
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
     NoOutputTransform, Trigger, Output, State
@@ -151,6 +154,23 @@ def modal_demo(selected, budget_name, copy_from):
     return False, idx
 
 
+@app.callback(
+    Output("download-budget", "data"),
+    Trigger("download-btn", "n_clicks"),
+    State("selected-budget", "data"),
+    prevent_initial_call=True
+)
+def download(budget_idx):
+    budget = repo.get_budget(budget_idx)
+    budget_path = repo.get_budget_path(budget_idx)
+
+    def to_json(bytes_io: BytesIO):
+        with open(budget_path, "rb") as f:
+            bytes_io.write(f.read())
+
+    return dcc.send_bytes(to_json, f"{budget.name}.json")
+
+
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='change-store', data={}, storage_type='memory'),
@@ -159,15 +179,28 @@ app.layout = html.Div([
     dcc.Store(id='dirty', data=[], storage_type='memory'),
     dmc.Header(
         height=50, children=[
-            dmc.ActionIcon(
-                DashIconify(icon="material-symbols:save", height=24),
-                variant='filled',
-                color="blue",
-                size="lg",
-                id="save-btn",
-                disabled=True,
-                m="10px"
-            )
+            dmc.Grid([
+                dmc.ActionIcon(
+                    DashIconify(icon="material-symbols:save", height=24),
+                    variant='filled',
+                    color="blue",
+                    size="lg",
+                    id="save-btn",
+                    disabled=True,
+                    m="10px"
+                ),
+                html.Div([
+                    dmc.ActionIcon(
+                        DashIconify(icon="material-symbols:download", height=24),
+                        variant='filled',
+                        color="blue",
+                        size="lg",
+                        id="download-btn",
+                        m="10px"
+                    ),
+                    Download(id="download-budget")
+                ])
+            ])
         ]
     ),
     html.Div(id='page-content', children=[
