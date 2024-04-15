@@ -13,8 +13,9 @@ from dash_extensions.snippets import get_triggered
 from dash_iconify import DashIconify
 from flask import Flask
 
-from finance.webapp import expense_income_graph, income_table, transfer_table, balance_summary, \
-    movements, accounts_table
+from finance.webapp import expense_income_graph, income_table, transfer_table, \
+    balance_summary, \
+    movements, accounts_table, movements_graph
 from finance.webapp import expense_table
 from finance.webapp import saldo_graph
 from finance.webapp.models import ChangeStoreModel
@@ -259,13 +260,15 @@ app.layout = html.Div([
                                 dmc.Tab("Udgifter", value="expenses"),
                                 dmc.Tab("Indkomst", value="incomes"),
                                 dmc.Tab("Overførsler", value="transfers"),
-                                dmc.Tab("Konti", value="accounts")
+                                dmc.Tab("Konti", value="accounts"),
+                                dmc.Tab("Movements", value="movements")
                             ]
                         ),
                         dmc.TabsPanel(expense_table.init(app), value="expenses"),
                         dmc.TabsPanel(income_table.init(app), value="incomes"),
                         dmc.TabsPanel(transfer_table.init(app), value="transfers"),
-                        dmc.TabsPanel(accounts_table.bp.embed(app), value="accounts")
+                        dmc.TabsPanel(accounts_table.bp.embed(app), value="accounts"),
+                        dmc.TabsPanel(movements_graph.init(app), value="movements")
                     ],
                     value="expenses",
                     m="sm"
