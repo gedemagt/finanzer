@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Any, Dict
 from uuid import uuid4
 
 
@@ -119,6 +119,7 @@ class Budget(Observable):
     budget_accounts: List[str] = field(default_factory=list)
     accounts: List[Account] = field(default_factory=list)
     id: str = field(default_factory=lambda: str(uuid4()))
+    extra: Dict[str, Any] = field(default_factory=dict)
 
     def copy(self):
         budget = Budget.from_dict(self.to_dict())
@@ -170,6 +171,9 @@ class Budget(Observable):
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
 
+    def add_extra(self, key, value):
+        self.extra[key] = value
+
     @staticmethod
     def from_dict(data: dict):
         b = Budget(data["name"], id=data["id"])
@@ -194,7 +198,9 @@ class Budget(Observable):
 
         for acc in data["accounts"]:
             b.accounts.append(Account(**acc))
-        
+
+        b.extra = data.get("extra", {})
+
         return b
 
     @staticmethod
