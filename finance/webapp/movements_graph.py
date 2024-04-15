@@ -67,7 +67,12 @@ def create_figure(budget: Budget):
         nodes[n.level].append(n)
 
     elements = [
-        {'data': {'source': e.start, 'target': e.end, 'label': str(int(e.transfer))}}
+        {'data': {'source': e.start, 'target': e.end, 'label': str(int(e.transfer))},
+         'style': {
+             'edge-text-rotation': 'autorotate',
+             'text-background-color': '#ffffff',
+             'text-background-opacity': 1
+         }}
         for e in edges
     ]
 
@@ -85,13 +90,20 @@ def create_figure(budget: Budget):
     for level in sorted(nodes):
         n_nodes = len(nodes[level])
         for idx, n in enumerate(nodes[level]):
+            if n.account in balance:
+                b = str(int(balance[n.account]))
+            else:
+                b = ''
             elements.append(
-                {'data': {'id': n.account, 'label': f"{n.account}\n{balance.get(n.account, '')}",
+                {'data': {'id': n.account, 'label': f"{n.account}\n{b}",
                           'tag': n.tag},
                  'position': budget.extra.get("account-layout", {}).get(n.account, {'y': height / (n_nodes + 1) * (idx + 1), 'x': level * 500}),
                  'style': {
                      'background-color': 'red' if balance.get(n.account, 0.0) < 0 else 'blue',
-                     'text-wrap': 'wrap'
+                     'text-wrap': 'wrap',
+                     'color': 'white',
+                     'text-outline-color': 'white',
+                     'font-weight': 'bold'
                  }
                 }
             )
@@ -134,6 +146,17 @@ def create_figure(budget: Budget):
                     'target-arrow-shape': 'triangle',
                 }
             },
+            {
+                'selector': 'node',
+                'style': {
+                    'content': 'data(label)',
+                    'text-halign': 'center',
+                    'text-valign': 'center',
+                    'width': '150px',
+                    'height': '60px',
+                    'shape': 'square'
+                }
+            }
         ]
     )
 
