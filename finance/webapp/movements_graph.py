@@ -181,7 +181,7 @@ def init(app: DashProxy):
         try:
             budget = repo.get_budget(budget_idx)
 
-            if state == budget.extra["account-layout"]:
+            if state == budget.get("account-layout"):
                 raise PreventUpdate()
 
             budget.add_extra("account-layout", state)
