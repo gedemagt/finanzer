@@ -31,7 +31,7 @@ jobs:
         git add $FILE
         git commit -m "Bumped version"
         echo "HELLO1"
-        git config --unset-all http.https://github.com/.extraheader
+        #git config --unset-all http.https://github.com/.extraheader
         echo "HELLO2"
         git push --prune https://token:GITHUB_TOKEN@github.com/gedemagt/finanzer-ha-addon.git
         echo "HELLO3"
