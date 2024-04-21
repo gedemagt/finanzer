@@ -14,3 +14,22 @@ jobs:
       uses: actions/checkout@v2
     - name: Semantic tag
       uses: paulhatch/semantic-version@v5.4.0
+    - name: Generate API module
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git clone https://user:$GITHUB_TOKEN@gedemagt/finanzer-ha-addon
+        
+        cd my-repo
+        git config user.name "user"
+        git config user.email "dev@example.com"
+        
+        git checkout -b main
+        
+        jq '.version = "0.0.20"' finanzer-ha-addon/config.json
+        
+        git add finanzer-ha-addon/config.json
+        git commit -m "Bumped version"
+        
+        git config --unset-all http.https://github.com/.extraheader
+        git push --set-upstream origin main # This does not work
