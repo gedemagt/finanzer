@@ -15,9 +15,12 @@ jobs:
     - name: Semantic tag
       id: semantic_tag
       uses: paulhatch/semantic-version@v5.4.0
+    - uses: oleksiyrudenko/gha-git-credentials@v2-latest
+      with:
+        token: '${{ secrets.FINANZER_HA_ADDON_PAT }}'
     - name: Generate API module
-      env:
-        GITHUB_TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
+      #env:
+      # GITHUB_TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
       run: |
         git clone https://github.com/gedemagt/finanzer-ha-addon
         
