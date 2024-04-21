@@ -17,6 +17,9 @@ jobs:
     - name: Semantic tag
       id: semantic_tag
       uses: paulhatch/semantic-version@v5.4.0
+      with:
+        bump_each_commit: true
+        bump_each_commit_patch_pattern: "(PATCH)"
     - name: Tag stuff
       env:
        TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
