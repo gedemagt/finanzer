@@ -30,12 +30,10 @@ jobs:
         git config --global user.email "mail@jeshj.com"
         
         FILE=finanzer-ha-addon/config.json
+        VERSION="${{steps.semantic_tag.outputs.version}}"
         cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
         
         git add $FILE
-        git commit -m "Bumped version"
-        echo "HELLO1"
-        
-        echo "HELLO2"
+        git commit -m "Bumped version to $VERSION"
+        git tag $VERSION
         git push
-        echo "HELLO3"
