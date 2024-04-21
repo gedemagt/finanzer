@@ -20,9 +20,9 @@ jobs:
       run: |
         git clone https://user:$GITHUB_TOKEN@github.com/gedemagt/finanzer-ha-addon
         
-        cd my-repo
-        git config user.name "user"
-        git config user.email "dev@example.com"
+        cd finanzer-ha-addon
+        git config user.name "finanzer-repo"
+        git config user.email "mail@jeshj.com"
         
         git checkout -b main
         
