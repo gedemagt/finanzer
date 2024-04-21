@@ -24,8 +24,6 @@ jobs:
         git config user.name "finanzer-repo"
         git config user.email "mail@jeshj.com"
         
-        git checkout -b main
-        
         jq '.version = "0.0.20"' finanzer-ha-addon/config.json
         
         git add finanzer-ha-addon/config.json
