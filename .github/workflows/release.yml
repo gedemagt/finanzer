@@ -15,10 +15,9 @@ jobs:
     - name: Semantic tag
       id: semantic_tag
       uses: paulhatch/semantic-version@v5.4.0
-    - uses: de-vri-es/setup-git-credentials@v2
-      with:
-        credentials: ${{ secrets.FINANZER_HA_ADDON_PAT }}
     - name: Generate API module
+      env:
+        GITHUB_TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
       run: |
         git clone https://github.com/gedemagt/finanzer-ha-addon
         
@@ -33,6 +32,8 @@ jobs:
         git add $FILE
         git commit -m "Bumped version"
         echo "HELLO1"
+        
+        git config --unset-all http.https://github.com/.extraheader
         echo "HELLO2"
         git push
         echo "HELLO3"
