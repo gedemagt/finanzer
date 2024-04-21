@@ -26,8 +26,8 @@ jobs:
         git clone https://github.com/gedemagt/finanzer-ha-addon
         
         cd finanzer-ha-addon
-        git config user.name "finanzer-repo"
-        git config user.email "mail@jeshj.com"
+        git config --global user.name "finanzer-repo"
+        git config --global user.email "mail@jeshj.com"
         
         FILE=finanzer-ha-addon/config.json
         cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
@@ -36,7 +36,6 @@ jobs:
         git commit -m "Bumped version"
         echo "HELLO1"
         
-        #git config --unset-all http.https://github.com/.extraheader
         echo "HELLO2"
         git push
         echo "HELLO3"
