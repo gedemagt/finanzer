@@ -13,6 +13,7 @@ jobs:
     - name: Checkout the repository
       uses: actions/checkout@v2
     - name: Semantic tag
+      id: semantic_tag
       uses: paulhatch/semantic-version@v5.4.0
     - name: Generate API module
       env:
@@ -24,9 +25,10 @@ jobs:
         git config user.name "finanzer-repo"
         git config user.email "mail@jeshj.com"
         
-        jq '.version = "0.0.20"' finanzer-ha-addon/config.json
+        jq '.version = "${{steps.semantic_tag.outputs.version_tag}}"' finanzer-ha-addon/config.json
         
         git add finanzer-ha-addon/config.json
+        git status
         git commit -m "Bumped version"
         
         git config --unset-all http.https://github.com/.extraheader
