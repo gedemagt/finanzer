@@ -14,9 +14,9 @@ def handle_update(old_data, new_data, entries, grp_name):
         return
 
     if len(new_data) < len(old_data):
-        new_data_names = [x['name'] for x in new_data]
+        new_data_names = [x['id'] for x in new_data]
         for x in entries:
-            if x.name not in new_data_names:
+            if x.id not in new_data_names:
                 entries.remove(x)
                 logging.debug(f"Expense: Removed {x.name} ({grp_name})")
     else:
