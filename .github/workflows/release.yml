@@ -33,7 +33,7 @@ jobs:
         git commit -m "Bumped version"
         echo "HELLO1"
         
-        git config --unset-all http.https://github.com/.extraheader
+        #git config --unset-all http.https://github.com/.extraheader
         echo "HELLO2"
         git push
         echo "HELLO3"
