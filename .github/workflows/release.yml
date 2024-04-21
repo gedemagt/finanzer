@@ -18,7 +18,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git clone https://user:$GITHUB_TOKEN@gedemagt/finanzer-ha-addon
+        git clone https://user:$GITHUB_TOKEN@github.com/gedemagt/finanzer-ha-addon
         
         cd my-repo
         git config user.name "user"
