@@ -25,11 +25,12 @@ jobs:
         git config user.name "finanzer-repo"
         git config user.email "mail@jeshj.com"
         
-        jq '.version = "${{steps.semantic_tag.outputs.version_tag}}"' finanzer-ha-addon/config.json
-        
-        git add finanzer-ha-addon/config.json
+        FILE=finanzer-ha-addon/config.json
+        cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
+
+        git add $FIL
         git status
-        git commit -m "Bumped version"
+        git commit -m "Bumped version to ${{steps.semantic_tag.outputs.version}}"
         
         git config --unset-all http.https://github.com/.extraheader
         git push --set-upstream origin main # This does not work
