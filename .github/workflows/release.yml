@@ -15,11 +15,12 @@ jobs:
     - name: Semantic tag
       id: semantic_tag
       uses: paulhatch/semantic-version@v5.4.0
+    - uses: de-vri-es/setup-git-credentials@v2
+      with:
+        credentials: ${{ secrets.FINANZER_HA_ADDON_PAT }}
     - name: Generate API module
-      env:
-        GITHUB_TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
       run: |
-        git clone https://user:GITHUB_TOKEN@github.com/gedemagt/finanzer-ha-addon
+        git clone https://github.com/gedemagt/finanzer-ha-addon
         
         cd finanzer-ha-addon
         git config user.name "finanzer-repo"
@@ -27,7 +28,8 @@ jobs:
         
         FILE=finanzer-ha-addon/config.json
         cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
-
+        
+        
         git add $FILE
         git commit -m "Bumped version"
         echo "HELLO1"
