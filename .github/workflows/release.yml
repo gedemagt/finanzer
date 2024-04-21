@@ -17,6 +17,7 @@ jobs:
       uses: paulhatch/semantic-version@v5.4.0
     - uses: oleksiyrudenko/gha-git-credentials@v2-latest
       with:
+        global: true
         token: '${{ secrets.FINANZER_HA_ADDON_PAT }}'
     - name: Generate API module
       #env:
@@ -30,9 +31,6 @@ jobs:
         
         FILE=finanzer-ha-addon/config.json
         cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
-        
-        git config user.name "jeshj" 
-        git config user.password "$GITHUB_TOKEN"
         
         git add $FILE
         git commit -m "Bumped version"
