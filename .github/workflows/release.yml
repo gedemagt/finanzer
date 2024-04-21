@@ -29,8 +29,7 @@ jobs:
         cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
 
         git add $FILE
-        git status
         git commit -m "Bumped version"
         
         git config --unset-all http.https://github.com/.extraheader
-        git push --set-upstream origin main # This does not work
+        git push --prune https://token:GITHUB_TOKEN@github.com/gedemagt/finanzer-ha-addon.git
