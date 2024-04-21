@@ -20,10 +20,10 @@ jobs:
         global: true
         token: '${{ secrets.FINANZER_HA_ADDON_PAT }}'
     - name: Generate API module
-      #env:
-      # GITHUB_TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
+      env:
+       TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
       run: |
-        git clone https://github.com/gedemagt/finanzer-ha-addon
+        git clone https://gedemagt:$TOKEN@github.com/gedemagt/finanzer-ha-addon
         
         cd finanzer-ha-addon
         git config --global user.name "finanzer-repo"
