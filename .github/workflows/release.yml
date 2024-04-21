@@ -28,7 +28,7 @@ jobs:
         FILE=finanzer-ha-addon/config.json
         cat $FILE | jq '.version = "${{steps.semantic_tag.outputs.version}}"' | tee $FILE
 
-        git add $FIL
+        git add $FILE
         git status
         git commit -m "Bumped version to ${{steps.semantic_tag.outputs.version}}"
         
