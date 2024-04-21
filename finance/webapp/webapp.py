@@ -1,8 +1,7 @@
-import json
 from io import BytesIO
 from uuid import uuid4
 
-from dash import ALL, Input, Dash
+from dash import ALL, Input
 from dash.dcc import Download
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
@@ -175,8 +174,8 @@ def download(budget_idx):
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='change-store', data={}, storage_type='memory'),
-    dcc.Store(id='selected-budget', data=None, storage_type='memory'),
-    dcc.Store(id='selected-block', data=None, storage_type='memory'),
+    dcc.Store(id='selected-budget', data=None, storage_type='local'),
+    dcc.Store(id='selected-block', data=None, storage_type='local'),
     dcc.Store(id='dirty', data=[], storage_type='memory'),
     dmc.Header(
         height=50, children=[

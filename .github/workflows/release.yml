@@ -1,0 +1,16 @@
+name: 'Release'
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Tag release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v2
+    - name: Semantic tag
+      uses: paulhatch/semantic-version@latest
