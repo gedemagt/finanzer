@@ -20,7 +20,17 @@ jobs:
       with:
         bump_each_commit: true
         bump_each_commit_patch_pattern: "(PATCH)"
-    - name: Tag stuff
+    - name: Create tag
+      uses: actions/github-script@v5
+      with:
+        script: |
+          github.rest.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: 'refs/tags/${{steps.semantic_tag.outputs.version}}',
+            sha: context.sha
+          })
+    - name: Tag HA addon
       env:
        TOKEN: ${{ secrets.FINANZER_HA_ADDON_PAT }}
       run: |
@@ -40,6 +50,3 @@ jobs:
         
         git tag $VERSION
         git push origin $VERSION
-      
-      
-        echo Done
