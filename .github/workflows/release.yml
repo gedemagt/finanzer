@@ -33,5 +33,7 @@ jobs:
         
         git add $FILE
         git commit -m "Bumped version to $VERSION"
+        git push origin
+        
         git tag $VERSION
-        git push
+        git push origin $VERSION
