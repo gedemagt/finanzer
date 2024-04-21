@@ -13,4 +13,4 @@ jobs:
     - name: Checkout the repository
       uses: actions/checkout@v2
     - name: Semantic tag
-      uses: paulhatch/semantic-version@latest
+      uses: paulhatch/semantic-version@5.4.0
