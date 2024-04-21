@@ -33,5 +33,5 @@ jobs:
         echo "HELLO1"
         #git config --unset-all http.https://github.com/.extraheader
         echo "HELLO2"
-        git push --prune https://token:GITHUB_TOKEN@github.com/gedemagt/finanzer-ha-addon.git
+        git push
         echo "HELLO3"
