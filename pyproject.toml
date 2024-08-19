@@ -13,6 +13,7 @@ dash-iconify = "^0.1"
 dataclass-wizard = "^0.22"
 dash-cytoscape = "^1.0.0"
 gunicorn = "^23.0.0"
+setuptools = "^72.2.0"
 
 [tool.poetry.dev-dependencies]
 
