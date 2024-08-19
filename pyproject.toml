@@ -5,20 +5,20 @@ description = ""
 authors = ["jsjes <jsjes@vestas.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.9, <3.12"
+python = ">=3.9, <3.13"
 numpy = "^1.22"
 dash-extensions = "^1.0"
 dash-mantine-components = "^0.12"
 dash-iconify = "^0.1"
 dataclass-wizard = "^0.22"
 dash-cytoscape = "^1.0.0"
+gunicorn = "^23.0.0"
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^5.7.0"
 pyinstaller-hooks-contrib = "^2022.14"
-gunicorn = "^22.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
