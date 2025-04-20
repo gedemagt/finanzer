@@ -43,7 +43,7 @@ class ModalInput(DashBlueprint):
                                     id=self._close_id,
                                 ),
                             ],
-                            position="right",
+                            justify="right",
                         ),
                     ],
                 ),

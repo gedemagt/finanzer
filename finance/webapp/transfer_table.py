@@ -1,9 +1,8 @@
 from dataclasses import asdict
-from uuid import uuid4
-
 from dash.exceptions import PreventUpdate
+from dash_extensions.snippets import get_triggered
 
-from finance.model.entry import Budget
+from finance.model.entry import Budget, Transfer
 
 from dash_extensions.enrich import html, Input, Output, DashProxy, Trigger, State
 from dash_extensions.enrich import dash_table
@@ -90,6 +89,22 @@ def create_callbacks(app: DashProxy):
                 create_data_table(budget),
                 create_add_btn("add-transfer")
             ]
+        except BudgetNotFoundError:
+            raise PreventUpdate()
+
+    @app.callback(
+        Output('change-store', 'data', allow_duplicate=True),
+        Trigger("add-transfer", "n_clicks"),
+        State("selected-budget", "data"),
+        prevent_initial_call=True
+    )
+    def on_new_account(budget_idx: str):
+        if get_triggered().n_clicks is None:
+            raise PreventUpdate()
+        try:
+            budget = repo.get_budget(budget_idx)
+            budget.add_transfer(Transfer(name="New transfer", amount=0, source=budget.accounts[0].name, destination=budget.accounts[1].name))
+            return ChangeStoreModel(budget_idx)
         except BudgetNotFoundError:
             raise PreventUpdate()
 

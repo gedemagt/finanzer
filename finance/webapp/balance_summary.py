@@ -10,45 +10,45 @@ bp = DashBlueprint()
 
 def create_summary(budget: Budget):
     return dmc.Grid([
-        dmc.Col([
+        dmc.GridCol([
             dmc.Card([
                 dmc.Group(
                     children=[
                         dmc.Text("Indkomst"),
                     ],
-                    position="center",
+                    justify="center",
                 ),
                 dmc.Center([
                     dmc.Text(f"DKK ", size="xs", mr="xs"),
-                    dmc.Text(f"{sum(x.total_monthly() for x in budget.incomes):0.0f}", size="lg", weight=700)
+                    dmc.Text(f"{sum(x.total_monthly() for x in budget.incomes):0.0f}", size="lg")
                 ])
             ], withBorder=True)
         ], span=4),
-        dmc.Col([
+        dmc.GridCol([
             dmc.Card([
                 dmc.Group(
                     children=[
                         dmc.Text("Udgifter"),
                     ],
-                    position="center",
+                    justify="center",
                 ),
                 dmc.Center([
                     dmc.Text(f"DKK ", size="xs", mr="xs"),
-                    dmc.Text(f"{sum(x.total_monthly() for x in budget.expenses):0.0f}", size="lg", weight=700)
+                    dmc.Text(f"{sum(x.total_monthly() for x in budget.expenses):0.0f}", size="lg")
                 ])
             ], withBorder=True)
         ], span=4),
-        dmc.Col([
+        dmc.GridCol([
             dmc.Card([
                 dmc.Group(
                     children=[
                         dmc.Text("Balance"),
                     ],
-                    position="center",
+                    justify="center",
                 ),
                 dmc.Center([
                     dmc.Text(f"DKK ", size="xs", mr="xs"),
-                    dmc.Text(f"{sum(x.total_monthly() for x in budget.incomes) - sum(x.total_monthly() for x in budget.expenses):0.0f}", size="lg", weight=700)
+                    dmc.Text(f"{sum(x.total_monthly() for x in budget.incomes) - sum(x.total_monthly() for x in budget.expenses):0.0f}", size="lg")
                 ])
             ], withBorder=True)
         ], span=4)

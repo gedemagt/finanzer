@@ -15,20 +15,22 @@ def create_movements(budget: Budget, quarter: int = None):
 
     if quarter is None:
         quarter = datetime.now().month // 3 - 1
+
+    quarter = int(quarter)
     months = [quarter * 3 + 1, quarter * 3 + 2, quarter * 3 + 3]
     size = max(len(monthly_payments[x]) for x in months)
 
     children = [
-        dmc.Col([
+        dmc.GridCol([
             dmc.Select(
                 id="block-select",
                 data=[
-                    {"label": f"{MONTHS[0]}-{MONTHS[2]}", "value": 0},
-                    {"label": f"{MONTHS[3]}-{MONTHS[5]}", "value": 1},
-                    {"label": f"{MONTHS[6]}-{MONTHS[8]}", "value": 2},
-                    {"label": f"{MONTHS[9]}-{MONTHS[11]}", "value": 3},
+                    {"label": f"{MONTHS[0]}-{MONTHS[2]}", "value": "0"},
+                    {"label": f"{MONTHS[3]}-{MONTHS[5]}", "value": "1"},
+                    {"label": f"{MONTHS[6]}-{MONTHS[8]}", "value": "2"},
+                    {"label": f"{MONTHS[9]}-{MONTHS[11]}", "value": "3"},
                 ],
-                value=quarter
+                value=str(quarter)
             )
         ], span=12, mt=3, className="text-center")
     ]
@@ -60,13 +62,13 @@ def create_movements(budget: Budget, quarter: int = None):
         ]) for _ in range(size - len(monthly_payments[month]))]
 
         rows.append(html.Tr([
-            html.Td(dmc.Text("Total", weight=700)),
-            html.Td(dmc.Text(sum(x.payment_size for x in monthly_payments[month]), weight=700), style={"text-align": "right"})
+            html.Td(dmc.Text("Total")),
+            html.Td(dmc.Text(sum(x.payment_size for x in monthly_payments[month])), style={"text-align": "right"})
         ]))
 
         body = [html.Tbody(rows)]
         children.append(
-            dmc.Col([
+            dmc.GridCol([
                 dmc.Card([
                     dmc.Center(dmc.Text(MONTHS[month-1])),
                     dmc.CardSection([

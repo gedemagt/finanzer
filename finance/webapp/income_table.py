@@ -70,8 +70,8 @@ def create_table(budget: Budget):
                 dmc.AccordionControl(
                     [
                         dmc.Grid([
-                            dmc.Col(entry_group.name, span=10),
-                            dmc.Col(dmc.Text(f"{entry_group.total_monthly():0.2f}", align="right"), span=2)
+                            dmc.GridCol(entry_group.name, span=10),
+                            dmc.GridCol(dmc.Text(f"{entry_group.total_monthly():0.2f}"), span=2)
                         ])
                     ]
                 ),
@@ -85,7 +85,7 @@ def create_table(budget: Budget):
                                    variant="outline", color="green"),
                         dmc.Button("Delete", id=dict(type="delete-income", grp=entry_group.id), size="xs", mb="5px",
                                    variant="outline", color="red")
-                    ], position="right"),
+                    ], justify="right"),
                     create_data_table(entry_group, budget)
                 ])
             ], value=entry_group.id)
@@ -208,7 +208,8 @@ def init(app: DashProxy):
         modal.embed(app),
         dmc.Accordion(
             id='income-accordion',
-            chevronPosition="left"
+            chevronPosition="left",
+            children=[]
         ),
         create_add_btn('add-income-group')
     ])

@@ -5,7 +5,7 @@ from dash import ALL, Input
 from dash.dcc import Download
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import DashProxy, html, dcc, TriggerTransform, \
-    NoOutputTransform, Trigger, Output, State
+    Trigger, Output, State
 
 import dash_mantine_components as dmc
 from dash_extensions.snippets import get_triggered
@@ -28,7 +28,7 @@ app = DashProxy(
     update_title=None,
     server=flask_app,
     transforms=[
-        TriggerTransform(), NoOutputTransform(), DataclassTransform()
+        TriggerTransform(), DataclassTransform()
     ],
     external_stylesheets=[
         'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css'
@@ -112,8 +112,8 @@ def select_budget(selected_idx: str):
         dmc.NavLink(
             id=dict(type="select-budget", budget=idx),
             label=budget.name,
-            icon=DashIconify(icon="bi:house-door-fill", height=16),
-            active=idx == selected_idx
+            leftSection=DashIconify(icon="bi:house-door-fill", height=16),
+            #active=idx == selected_idx
         ) for idx, budget in repo.budgets.items()
     ]
 
@@ -171,138 +171,141 @@ def download(budget_idx):
     return dcc.send_bytes(to_json, f"{budget.name}.json")
 
 
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    dcc.Store(id='change-store', data={}, storage_type='memory'),
-    dcc.Store(id='selected-budget', data=None, storage_type='local'),
-    dcc.Store(id='selected-block', data=None, storage_type='local'),
-    dcc.Store(id='dirty', data=[], storage_type='memory'),
-    dmc.Header(
-        height=50, children=[
-            dmc.Grid([
-                dmc.ActionIcon(
-                    DashIconify(icon="material-symbols:save", height=24),
-                    variant='filled',
-                    color="blue",
-                    size="lg",
-                    id="save-btn",
-                    disabled=True,
-                    m="10px"
-                ),
-                html.Div([
+app.layout = dmc.MantineProvider(
+    theme={},
+    children=html.Div([
+        dcc.Location(id='url', refresh=False),
+        dcc.Store(id='change-store', data={}, storage_type='memory'),
+        dcc.Store(id='selected-budget', data=None, storage_type='local'),
+        dcc.Store(id='selected-block', data=None, storage_type='local'),
+        dcc.Store(id='dirty', data=[], storage_type='memory'),
+        html.Div(
+            children=[
+                dmc.Grid([
                     dmc.ActionIcon(
-                        DashIconify(icon="material-symbols:download", height=24),
+                        DashIconify(icon="material-symbols:save", height=24),
                         variant='filled',
                         color="blue",
                         size="lg",
-                        id="download-btn",
-                        m="10px"
+                        id="save-btn",
+                        disabled=True,
+                        m=10
                     ),
-                    Download(id="download-budget")
-                ])
-            ])
-        ]
-    ),
-    html.Div(id='page-content', children=[
-        dmc.Grid([
-            dmc.Col([
-                html.Div(
-                    children=[
-                        html.Div(id="budget-list"),
-                        dmc.NavLink(
-                            id="add-budget-btn",
-                            label="Add budget",
-                            icon=DashIconify(icon="bi:plus-fill", height=16),
+                    html.Div([
+                        dmc.ActionIcon(
+                            DashIconify(icon="material-symbols:download", height=24),
+                            variant='filled',
+                            color="blue",
+                            size="lg",
+                            id="download-btn",
+                            m=10
                         ),
-                        dmc.Modal(
-                            title="Create new budget",
-                            id="modal-simple",
-                            zIndex=10000,
-                            children=[
-                                dmc.TextInput(
-                                    label="Budget name",
-                                    id="budget-name"
-                                ),
-                                dmc.Select(
-                                    label="Copy from...",
-                                    placeholder="Select one",
-                                    id="copy-select",
-                                    value=None,
-                                    data=[
-                                        {"value": idx, "label": budget.name}
-                                        for idx, budget in repo.budgets.items()
-                                    ],
-                                ),
-                                dmc.Space(h=20),
-                                dmc.Group(
-                                    [
-                                        dmc.Button("Submit", id="modal-submit-button"),
-                                        dmc.Button(
-                                            "Close",
-                                            color="red",
-                                            variant="outline",
-                                            id="modal-close-button",
-                                        ),
-                                    ],
-                                    position="right",
-                                ),
-                            ],
-                        )
-                    ]
-                )
-            ], span=1),
-            dmc.Col([
-                dmc.Tabs(
-                    [
-                        dmc.TabsList(
-                            [
-                                dmc.Tab("Udgifter", value="expenses"),
-                                dmc.Tab("Indkomst", value="incomes"),
-                                dmc.Tab("Overførsler", value="transfers"),
-                                dmc.Tab("Konti", value="accounts"),
-                                dmc.Tab("Movements", value="movements")
-                            ]
-                        ),
-                        dmc.TabsPanel(expense_table.init(app), value="expenses"),
-                        dmc.TabsPanel(income_table.init(app), value="incomes"),
-                        dmc.TabsPanel(transfer_table.init(app), value="transfers"),
-                        dmc.TabsPanel(accounts_table.bp.embed(app), value="accounts"),
-                        dmc.TabsPanel(movements_graph.init(app), value="movements")
-                    ],
-                    value="expenses",
-                    m="sm"
-                )
-            ], span=6),
-            dmc.Col([
-                dmc.Container([
-                    balance_summary.bp.embed(app)
-                ], m="sm"),
-                html.Div(id="upper-right", children=[
+                        Download(id="download-budget")
+                    ])
+                ], justify="right")
+            ]
+        ),
+        html.Div(id='page-content', children=[
+            dmc.Grid([
+                dmc.GridCol([
+                    html.Div(
+                        children=[
+                            html.Div(id="budget-list"),
+                            dmc.NavLink(
+                                id="add-budget-btn",
+                                label="Add budget",
+                                leftSection=DashIconify(icon="bi:plus-fill", height=16),
+                            ),
+                            dmc.Modal(
+                                title="Create new budget",
+                                id="modal-simple",
+                                zIndex=10000,
+                                children=[
+                                    dmc.TextInput(
+                                        label="Budget name",
+                                        id="budget-name"
+                                    ),
+                                    dmc.Select(
+                                        label="Copy from...",
+                                        placeholder="Select one",
+                                        id="copy-select",
+                                        value=None,
+                                        data=[
+                                            {"value": idx, "label": budget.name}
+                                            for idx, budget in repo.budgets.items()
+                                        ],
+                                    ),
+                                    dmc.Space(h=20),
+                                    dmc.Group(
+                                        [
+                                            dmc.Button("Submit", id="modal-submit-button"),
+                                            dmc.Button(
+                                                "Close",
+                                                color="red",
+                                                variant="outline",
+                                                id="modal-close-button",
+                                            ),
+                                        ],
+                                        justify="right",
+                                    ),
+                                ],
+                            )
+                        ]
+                    )
+                ], span=1),
+                dmc.GridCol([
                     dmc.Tabs(
                         [
                             dmc.TabsList(
                                 [
-                                    dmc.Tab("Fordeling", value="overview"),
-                                    dmc.Tab("Saldo", value="saldo"),
-                                    dmc.Tab("Månedsudgifter", value="movements")
+                                    dmc.TabsTab("Udgifter", value="expenses"),
+                                    dmc.TabsTab("Indkomst", value="incomes"),
+                                    dmc.TabsTab("Overførsler", value="transfers"),
+                                    dmc.TabsTab("Konti", value="accounts"),
+                                    dmc.TabsTab("Movements", value="movements")
                                 ]
                             ),
-                            dmc.TabsPanel(expense_income_graph.bp.embed(app), value="overview"),
-                            dmc.TabsPanel(saldo_graph.init(app), value="saldo"),
-                            dmc.TabsPanel(movements.init(app), value="movements")
+                            dmc.TabsPanel(expense_table.init(app), value="expenses"),
+                            dmc.TabsPanel(income_table.init(app), value="incomes"),
+                            dmc.TabsPanel(transfer_table.init(app), value="transfers"),
+                            dmc.TabsPanel(accounts_table.bp.embed(app), value="accounts"),
+                            dmc.TabsPanel(movements_graph.init(app), value="movements")
                         ],
-                        value="saldo",
+                        value="expenses",
                         m="sm"
-                    ),
-                ])
-            ], span=5)
-        ])
-    ], style=dict(height="calc(100vh - 50px)"))
-])
+                    )
+                ], span=6),
+                dmc.GridCol([
+                    dmc.Container([
+                        balance_summary.bp.embed(app)
+                    ], m="sm"),
+                    html.Div(id="upper-right", children=[
+                        dmc.Tabs(
+                            [
+                                dmc.TabsList(
+                                    [
+                                        dmc.TabsTab("Fordeling", value="overview"),
+                                        dmc.TabsTab("Saldo", value="saldo"),
+                                        dmc.TabsTab("Månedsudgifter", value="movements")
+                                    ]
+                                ),
+                                dmc.TabsPanel(expense_income_graph.bp.embed(app), value="overview"),
+                                dmc.TabsPanel(saldo_graph.init(app), value="saldo"),
+                                dmc.TabsPanel(movements.init(app), value="movements")
+                            ],
+                            value="saldo",
+                            m="sm"
+                        ),
+                    ])
+                ], span=5)
+            ])
+        ], style=dict(height="calc(100vh - 50px)"))
+    ])
+)
 
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.DEBUG)
-    app.run_server(
+    app.run(
         debug=True
     )

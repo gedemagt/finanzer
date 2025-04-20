@@ -1,6 +1,7 @@
 from dash.exceptions import PreventUpdate
+from dash_extensions.snippets import get_triggered
 
-from finance.model.entry import Budget, AccountType
+from finance.model.entry import Budget, AccountType, Account
 
 from dash_extensions.enrich import html, Input, Output, Trigger, State, DashBlueprint
 from dash_extensions.enrich import dash_table
@@ -95,8 +96,24 @@ def update(budget_idx: str):
         budget = repo.get_budget(budget_idx)
         return [
             create_data_table(budget),
-            create_add_btn("add-transfer")
+            create_add_btn("add-account")
         ]
+    except BudgetNotFoundError:
+        raise PreventUpdate()
+
+@bp.callback(
+    Output('change-store', 'data', allow_duplicate=True),
+    Trigger("add-account", "n_clicks"),
+    State("selected-budget", "data"),
+    prevent_initial_call=True
+)
+def on_new_account(budget_idx: str):
+    if get_triggered().n_clicks is None:
+        raise PreventUpdate()
+    try:
+        budget = repo.get_budget(budget_idx)
+        budget.accounts.append(Account(name="New account", owner="Owner", type=AccountType.Budget))
+        return ChangeStoreModel(budget_idx)
     except BudgetNotFoundError:
         raise PreventUpdate()
 

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from finance.model.entry import Budget
+from finance.model.entry import Budget, Account, AccountType
 
 
 class BudgetNotFoundError(Exception):
@@ -30,6 +30,7 @@ class BudgetRepository:
 
     def create_budget(self, name: str) -> Budget:
         budget = Budget(name, id=str(uuid4()))
+        budget.accounts.append(Account("Default", "", AccountType.Budget))
         self.budgets[budget.id] = budget
         self.save_budget(budget)
         return budget

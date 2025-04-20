@@ -105,8 +105,8 @@ def create_table(budget: Budget):
                 dmc.AccordionControl(
                     [
                         dmc.Grid([
-                            dmc.Col([dmc.Text(entry_group.name)], span=8),
-                            dmc.Col(dmc.Text(f"{entry_group.total_monthly():0.2f}", align="right"), span=4)
+                            dmc.GridCol([dmc.Text(entry_group.name)], span=8),
+                            dmc.GridCol(dmc.Text(f"{entry_group.total_monthly():0.2f}"), span=4)
                         ])
                     ]
                 ),
@@ -119,7 +119,7 @@ def create_table(budget: Budget):
                         dmc.Button("Omdøb", id=dict(type="rename-expense", grp=entry_group.id), size="xs", mb="5px", variant="outline", color="green"),
                         dmc.Button("Delete", id=dict(type="delete-expense", grp=entry_group.id), size="xs", mb="5px",
                                    variant="outline", color="red")
-                    ], position="right"),
+                    ], justify="right"),
                     create_data_table(entry_group, budget.accounts),
                 ])
             ], value=entry_group.id)
@@ -242,7 +242,8 @@ def init(app: DashProxy):
         modal.embed(app),
         dmc.Accordion(
             id='expense-accordion',
-            chevronPosition="left"
+            chevronPosition="left",
+            children=[]
         ),
         create_add_btn('add-expense-group')
     ])
